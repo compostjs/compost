@@ -186,7 +186,7 @@ let rec render node =
         match a with
         | Property(o) -> setProperty el k o
         | Attribute(v) -> el.setAttribute(k, v)
-        | Event(f) -> el.addEventListener(k, U2.Case1(EventListener(f el)))
+        | Event(f) -> el.addEventListener(k, U2.Case1(f el))
       let onRender () = 
         for _, f in rc do f()
         f |> FsOption.iter (fun f -> f el)

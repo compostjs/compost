@@ -8,5 +8,8 @@
     <Compile Include="interactive.fs" />
     <Compile Include="main.fs" />
   </ItemGroup>
-  <Import Project="..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Include="Fable.Core" Version="2.0.3" />
+    <PackageReference Include="Fable.Elmish.React" Version="2.2.0" />
+  </ItemGroup>
 </Project>
