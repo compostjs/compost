@@ -1,0 +1,4 @@
+.ionide
+node_modules/
+src/obj/
+src/bin/

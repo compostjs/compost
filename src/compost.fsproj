@@ -5,11 +5,10 @@
   <ItemGroup>
     <Compile Include="html.fs" />
     <Compile Include="compost.fs" />
-    <Compile Include="interactive.fs" />
     <Compile Include="main.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Fable.Core" Version="2.0.3" />
-    <PackageReference Include="Fable.Elmish.React" Version="2.2.0" />
+    <PackageReference Include="Fable.Browser.Dom" Version="1.1.0" />
+    <PackageReference Include="Fable.Core" Version="3.1.5" />
   </ItemGroup>
 </Project>

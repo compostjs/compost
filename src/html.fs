@@ -1,7 +1,8 @@
 ﻿module Compost.Html
 
 open Fable.Core
-open Fable.Import.Browser
+open Browser
+open Browser.Types
 open Fable.Core.JsInterop
 
 module FsOption = FSharp.Core.Option
@@ -78,10 +79,10 @@ module Virtualdom =
   let diff (tree1:obj) (tree2:obj): obj = failwith "JS only"
 
   [<Import("patch","virtual-dom")>]
-  let patch (node:obj) (patches:obj): Fable.Import.Browser.Node = failwith "JS only"
+  let patch (node:obj) (patches:obj): Node = failwith "JS only"
 
   [<Import("create","virtual-dom")>]
-  let createElement (e:obj): Fable.Import.Browser.Node = failwith "JS only"
+  let createElement (e:obj): Node = failwith "JS only"
 
 [<Fable.Core.Emit("jQuery($0).chosen()")>]
 let private chosen (el:HTMLElement) : unit = failwith "JS"
@@ -186,7 +187,7 @@ let rec render node =
         match a with
         | Property(o) -> setProperty el k o
         | Attribute(v) -> el.setAttribute(k, v)
-        | Event(f) -> el.addEventListener(k, U2.Case1(f el))
+        | Event(f) -> () //el.addEventListener(k, U2.Case1(EventListener(f el)))
       let onRender () = 
         for _, f in rc do f()
         f |> FsOption.iter (fun f -> f el)
