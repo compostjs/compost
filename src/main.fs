@@ -1,14 +1,77 @@
-module Demo.Main
+module main
 
 open Compost
 open Compost.Html
 open Browser
 
-let render out viz = 
-  let el = document.getElementById(out)
-  let svg = Compost.createSvg false false (el.clientWidth, el.clientHeight) viz
-  svg |> Html.renderTo el
+module Helpers = 
+  let parseValue v = 
+    if Common.isNumber(v) then COV(CO(unbox<float> v))
+    elif Common.isArray(v) then 
+      let a = unbox<obj[]> v
+      if a.Length <> 2 then failwithf "Cannot parse value: %A. Expected a number or an array with two elements." a
+      if not (Common.isNumber(a.[1])) then failwithf "Cannot parse value: %A. The second element should be a number." a
+      CAR(CA (unbox<string> a.[0]), unbox<float> a.[1])
+    else failwithf "Cannot parse value: %A. Expected a number or an array with two elements." v
 
+open Helpers
+
+type Scale = Scale<1>
+type Shape = Shape<1, 1>
+
+type JsScale = 
+  abstract continuous : float * float -> Scale
+
+type JsCompost =
+  abstract nestX : obj * obj * Shape -> Shape
+  abstract nestY : obj * obj * Shape -> Shape
+  abstract nest : obj * obj * obj * obj * Shape -> Shape
+  abstract scaleX : Scale * Shape -> Shape
+  abstract scaleY : Scale * Shape -> Shape
+  abstract scale : Scale * Scale * Shape -> Shape
+  abstract overlay : Shape[] -> Shape
+  abstract fillColor : string * Shape -> Shape
+  abstract strokeColor : string * Shape -> Shape
+  abstract font : string * string * Shape -> Shape
+  abstract padding : float * float * float * float * Shape -> Shape
+  abstract text : obj * obj * string * string * float -> Shape
+  abstract shape : obj[][] -> Shape
+  abstract line : obj[][] -> Shape
+  abstract axes : string * Shape -> Shape
+  abstract render : string * Shape -> unit
+
+let scale = 
+  { new JsScale with 
+      member x.continuous(lo, hi) = Continuous(CO lo, CO hi) }
+  
+let compost = 
+  { new JsCompost with
+      member x.scaleX(sc, sh) = Shape.InnerScale(Some(sc), None, sh) 
+      member x.scaleY(sc, sh) = Shape.InnerScale(None, Some(sc), sh) 
+      member x.scale(sx, sy, sh) = Shape.InnerScale(Some(sx), Some(sy), sh) 
+      member x.nestX(lx, hx, s) = Shape.NestX(parseValue lx, parseValue hx, s)
+      member x.nestY(ly, hy, s) = Shape.NestY(parseValue ly, parseValue hy, s)
+      member x.nest(lx, hx, ly, hy, s) = Shape.NestY(parseValue ly, parseValue hy, Shape.NestX(parseValue lx, parseValue hx, s))
+      member x.overlay(sh) = Shape.Layered(List.ofArray sh) 
+      member x.padding(t, r, b, l, s) = Shape.Padding((t, r, b, l), s)
+      member x.fillColor(c, s) = Derived.FillColor(c, s) 
+      member x.strokeColor(c, s) = Derived.StrokeColor(c, s) 
+      member x.font(f, c, s) = Derived.Font(f, c, s) 
+      member x.text(xp, yp, t, s, r) = 
+        let r = if box r = null then 0.0 else r
+        let s = if box s = null then "" else s
+        let va = if s.Contains("baseline") then Baseline elif s.Contains("hanging") then Hanging else Middle
+        let ha = if s.Contains("start") then Start elif s.Contains("end") then End else Center
+        Shape.Text(parseValue xp, parseValue yp, va, ha, r, t)
+      member x.shape(a) = Shape.Shape [ for p in a -> parseValue p.[0], parseValue p.[1] ] 
+      member x.line(a) = Shape.Line [ for p in a -> parseValue p.[0], parseValue p.[1] ] 
+      member x.axes(a, s) = Shape.Axes(a.Contains("top"), a.Contains("right"), a.Contains("bottom"), a.Contains("left"), s)
+      member x.render(id, viz) = 
+        let el = document.getElementById(id)
+        let svg = Compost.createSvg false false (el.clientWidth, el.clientHeight) viz
+        svg |> Html.renderTo el }
+
+(*
 let renderAnim id init render update =
   Html.createVirtualDomApp id init render update
 
@@ -27,15 +90,7 @@ let ca s = CA(s)
 // Some *fun* input data about British politics
 // ----------------------------------------------------------------------------
 
-// http://www.bankofengland.co.uk/boeapps/iadb/fromshowcolumns.asp?Travel=NIxRSxSUx&FromSeries=1&ToSeries=50&DAT=RNG&FD=1&FM=Jan&FY=2016&TD=1&TM=Jan&TY=2017&VFD=N&csv.x=17&csv.y=24&CSVF=TN&C=C8P&Filter=N
 
-let elections = 
-  [ "Conservative", "#1F77B4", 317, 365; "Labour", "#D62728", 262, 202; 
-    "LibDem", "#FF7F0E", 12, 11; "SNP", "#BCBD22", 35, 48; 
-    "Green", "#2CA02C", 1, 1; "DUP", "#8C564B", 10, 8 ]
-
-let gbpusd = [ 1.3206; 1.3267; 1.312; 1.3114; 1.3116; 1.3122; 1.3085; 1.3211; 1.3175; 1.3136; 1.3286; 1.3231; 1.3323; 1.3215; 1.3186; 1.2987; 1.296; 1.2932; 1.2885; 1.3048; 1.3287; 1.327; 1.3429; 1.3523; 1.3322; 1.3152; 1.3621; 1.4798; 1.4687; 1.467; 1.4694; 1.4293; 1.4064; 1.4196; 1.4114; 1.4282; 1.4334; 1.4465; 1.4552; 1.456; 1.4464; 1.4517; 1.4447; 1.4414 ] |> List.rev
-let gbpeur = [ 1.1823; 1.1867; 1.1838; 1.1936; 1.1944; 1.1961; 1.1917; 1.2017; 1.1969; 1.193; 1.2006; 1.1952; 1.1998; 1.1903; 1.1909; 1.1759; 1.1743; 1.168; 1.1639; 1.175; 1.1929; 1.192; 1.2081; 1.2177; 1.2054; 1.1986; 1.2254; 1.3039; 1.3018; 1.3018; 1.296; 1.2709; 1.2617; 1.2634; 1.2589; 1.2639; 1.2687; 1.2771; 1.2773; 1.2823; 1.2726; 1.2814; 1.2947; 1.2898 ] |> List.rev
 
 let inline i a b c d s = 
   dict ["sepal.length", float a;"sepal.width", float b;"petal.length",float c; "petal.width",float d], s
@@ -45,124 +100,8 @@ let iris =
     i 5.7 2.6 3.5 1 "Versicolor"; i 5.5 2.4 3.8 1.1 "Versicolor"; i 5.5 2.4 3.7 1 "Versicolor"; i 5.8 2.7 3.9 1.2 "Versicolor"; i 6 2.7 5.1 1.6 "Versicolor"; i 5.4 3 4.5 1.5 "Versicolor"; i 6 3.4 4.5 1.6 "Versicolor"; i 6.7 3.1 4.7 1.5 "Versicolor"; i 6.3 2.3 4.4 1.3 "Versicolor"; i 5.6 3 4.1 1.3 "Versicolor"; i 5.5 2.5 4 1.3 "Versicolor"; i 5.5 2.6 4.4 1.2 "Versicolor"; i 6.1 3 4.6 1.4 "Versicolor"; i 5.8 2.6 4 1.2 "Versicolor"; i 5 2.3 3.3 1 "Versicolor"; i 5.6 2.7 4.2 1.3 "Versicolor"; i 5.7 3 4.2 1.2 "Versicolor"; i 5.7 2.9 4.2 1.3 "Versicolor"; i 6.2 2.9 4.3 1.3 "Versicolor"; i 5.1 2.5 3 1.1 "Versicolor"; i 5.7 2.8 4.1 1.3 "Versicolor"; i 6.3 3.3 6 2.5 "Virginica"; i 5.8 2.7 5.1 1.9 "Virginica"; i 7.1 3 5.9 2.1 "Virginica"; i 6.3 2.9 5.6 1.8 "Virginica"; i 6.5 3 5.8 2.2 "Virginica"; i 7.6 3 6.6 2.1 "Virginica"; i 4.9 2.5 4.5 1.7 "Virginica"; i 7.3 2.9 6.3 1.8 "Virginica"; i 6.7 2.5 5.8 1.8 "Virginica"; i 7.2 3.6 6.1 2.5 "Virginica"; i 6.5 3.2 5.1 2 "Virginica"; i 6.4 2.7 5.3 1.9 "Virginica"; i 6.8 3 5.5 2.1 "Virginica"; i 5.7 2.5 5 2 "Virginica"; i 5.8 2.8 5.1 2.4 "Virginica"; 
     i 6.4 3.2 5.3 2.3 "Virginica"; i 6.5 3 5.5 1.8 "Virginica"; i 7.7 3.8 6.7 2.2 "Virginica"; i 7.7 2.6 6.9 2.3 "Virginica"; i 6 2.2 5 1.5 "Virginica"; i 6.9 3.2 5.7 2.3 "Virginica"; i 5.6 2.8 4.9 2 "Virginica"; i 7.7 2.8 6.7 2 "Virginica"; i 6.3 2.7 4.9 1.8 "Virginica"; i 6.7 3.3 5.7 2.1 "Virginica"; i 7.2 3.2 6 1.8 "Virginica"; i 6.2 2.8 4.8 1.8 "Virginica"; i 6.1 3 4.9 1.8 "Virginica"; i 6.4 2.8 5.6 2.1 "Virginica"; i 7.2 3 5.8 1.6 "Virginica"; i 7.4 2.8 6.1 1.9 "Virginica"; i 7.9 3.8 6.4 2 "Virginica"; i 6.4 2.8 5.6 2.2 "Virginica"; i 6.3 2.8 5.1 1.5 "Virginica"; i 6.1 2.6 5.6 1.4 "Virginica"; i 7.7 3 6.1 2.3 "Virginica"; i 6.3 3.4 5.6 2.4 "Virginica"; i 6.4 3.1 5.5 1.8 "Virginica"; i 6 3 4.8 1.8 "Virginica"; i 6.9 3.1 5.4 2.1 "Virginica"; i 6.7 3.1 5.6 2.4 "Virginica"; i 6.9 3.1 5.1 2.3 "Virginica"; i 5.8 2.7 5.1 1.9 "Virginica"; i 6.8 3.2 5.9 2.3 "Virginica"; i 6.7 3.3 5.7 2.5 "Virginica"; i 6.7 3 5.2 2.3 "Virginica"; i 6.3 2.5 5 1.9 "Virginica"; i 6.5 3 5.2 2 "Virginica"; i 6.2 3.4 5.4 2.3 "Virginica"; i 5.9 3 5.1 1.8 "Virginica" ]
 
-// ----------------------------------------------------------------------------
-// DEMO #1: Creating a bar chart
-// ----------------------------------------------------------------------------
-
-// TODO: 'Shape.Layered' of 'Derived.Column' (ca, co) 
-// TODO: Add 'Derived.FillColor' and 'Shape.Padding'
-// TODO: Add 'Shape.Axes'
 
 
-
-
-
-// ----------------------------------------------------------------------------
-// DEMO #2: Creating a colored line chart
-// ----------------------------------------------------------------------------
-
-// TODO: Create a line chart using 'Seq.indexed gbpusd' (numv i, numv v)
-// TODO: Use 'Derived.StrokeColor' to make it black
-// TODO: Add a 'Shape' (numv 0, numv 1) --> (numv 16, numv 1.8))
-// TODO: Make it #aec7e8 using 'Derived.FillColor' 
-// DEMO: Add second background box
-// DEMO: Add axes using 'Shape.Axes(f, t, t, t, body)'
-
-// DEMO: Create 'title' chart element
-// TODO: Align with chart using OuterScale (Some(Continuous(co 0, co 100))
-
-
-
-
-
-// ----------------------------------------------------------------------------
-// DEMO #3: Refactoring
-// ----------------------------------------------------------------------------
-
-// TODO: Extract the 'Title' function
-
-
-
-
-// ----------------------------------------------------------------------------
-// DEMO #4: Creating a colored line chart
-// ----------------------------------------------------------------------------
-
-// TODO: Render simple barchart using 'renderAnim state render update' & 'svg'
-// TODO: Define Start and Anim events, 'update' function and add button
-// TODO: Scale data based on state, trigger timeout
-
-
-let adjust k (hex:string) =
-  let r = System.Int32.Parse(hex.Substring(1, 2), System.Globalization.NumberStyles.HexNumber)
-  let g = System.Int32.Parse(hex.Substring(3, 2), System.Globalization.NumberStyles.HexNumber)
-  let b = System.Int32.Parse(hex.Substring(5, 2), System.Globalization.NumberStyles.HexNumber)
-  let f n = min 255 (int (k * float n))
-  "#" + ((f r <<< 16) + (f g <<< 8) + (f b)).ToString("X")
-  
-let partColumn f t x y = 
-  Shape [ CAR(x, f), COV y; CAR(x, t), COV y; CAR(x, t), COV (CO f); CAR(x, f), COV (CO t) ]
-
-Axes(false, false, true, true, Shape.Layered [ 
-    for p, clr, s17, s19 in elections -> 
-      Shape.Padding((0., 5., 0., 5.), 
-        Shape.Layered [
-          Derived.FillColor(adjust 0.8 clr, partColumn 0.0 0.5 (ca p) (co s17))
-          Derived.FillColor(adjust 1.2 clr, partColumn 0.5 1.0 (ca p) (co s19))
-        ]          
-        ) ]) |> render "out1"
-
-
-let Title(text, chart) = 
-  let title =
-    Shape.InnerScale(Some(Continuous(co 0, co 100)), Some(Continuous(co 0, co 100)),
-      Derived.Font("12pt arial", "black",
-        Shape.Text(numv 50, numv 80, Middle, 
-          Center, 0.0, text) ))
-
-  Shape.Layered [  
-    NestX(numv 0, numv 100, NestY(numv 85, numv 100, title))
-    NestX(numv 0, numv 100, NestY(numv 0, numv 85, chart))
-  ]
-
-
-let bars : Shape<1, 1> = 
-  Shape.InnerScale(None, Some(Continuous(co 0, co 410)), Shape.Layered [ 
-    for p, clr, s17, s19 in elections -> 
-      Shape.Padding((0., 10., 0., 10.), 
-        Shape.Layered [
-          Derived.FillColor(adjust 0.8 clr, partColumn 0.0 0.5 (ca p) (co s17))
-          Derived.FillColor(adjust 1.2 clr, partColumn 0.5 1.0 (ca p) (co s19))
-        ]          
-        ) ])
-
-Title("United Kingdom general elections (2017 vs 2019)", Shape.Axes(false, false, true, true, bars)) |> render "out1"
-
-let line data = 
-  Shape.Line [
-    for i, v in Seq.indexed data -> numv i, numv v
-  ]
-
-let body lo hi data = 
-  Shape.Axes(false, true, true, true, Shape.Layered [
-    Derived.FillColor("#1F77B460", 
-      Shape.Shape [
-        (numv 0, numv lo); (numv 16, numv lo); 
-        (numv 16, numv hi); (numv 0, numv hi) ] )
-    Derived.FillColor("#D6272860",
-      Shape.Shape [ 
-        (numv (List.length gbpusd - 1), numv lo); (numv 16, numv lo); 
-        (numv 16, numv hi); (numv (List.length gbpusd - 1), numv hi) ] )
-    Derived.StrokeColor("#202020", line data)
-  ])
-
-let chart = 
-  Shape.Layered [
-    NestY(numv 0, numv 50, body 1.25 1.52 gbpusd)
-    NestY(numv 50, numv 100, body 1.15 1.32 gbpeur)
-  ]
-
-Title("GBP-USD and GBP-EUR rates (June-July 2016)", chart) |> render "out2"
 
 
 
@@ -311,3 +250,4 @@ let renderr id trigger (_, state) =
 let state = false, [ for p, clr, _, v in elections -> p, v * 1<MP> ]
 renderAnim "out1" state (renderr "out1") update 
 renderAnim "out2" state (renderr "out2") update 
+*)
