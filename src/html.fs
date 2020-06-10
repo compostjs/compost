@@ -8,8 +8,20 @@ open Fable.Core.JsInterop
 module FsOption = FSharp.Core.Option
 
 module Common = 
+  [<Emit("Object.keys($0)")>]
+  let keys<'T> (obj:obj) : string[] = failwith "never"
+
+  [<Emit("$0(...$1)")>]
+  let apply<'A, 'R> (f:obj) (args:'A[]) : 'R = failwith "never"
+
   [<Emit("$0[$1]")>]
   let getProperty<'T> (obj:obj) (name:string) : 'T = failwith "never"
+
+  [<Emit("$0[$1] = $2")>]
+  let setProperty (o:obj) (s:string) (v:obj) = failwith "!"
+
+  [<Fable.Core.Emit("event")>]
+  let event () : Event = failwith "JS"
 
   [<Emit("parseInt($0, $1)")>]
   let parseInt (s:string) (b:int) : int = failwith "JS"
@@ -84,21 +96,6 @@ module Virtualdom =
   [<Import("create","virtual-dom")>]
   let createElement (e:obj): Node = failwith "JS only"
 
-[<Fable.Core.Emit("jQuery($0).chosen()")>]
-let private chosen (el:HTMLElement) : unit = failwith "JS"
-
-[<Fable.Core.Emit("jQuery($0).on($1, $2)")>]
-let private on (el:HTMLElement) (evt:string) (f:unit -> unit) : unit = failwith "JS"
-
-[<Emit("$0[$1]")>]
-let private getProperty (o:obj) (s:string) = failwith "!"
-
-[<Emit("$0[$1] = $2")>]
-let private setProperty (o:obj) (s:string) (v:obj) = failwith "!"
-
-[<Fable.Core.Emit("event")>]
-let private event () : Event = failwith "JS"
-
 type DomAttribute = 
   | Event of (HTMLElement -> Event -> unit)
   | Attribute of string
@@ -120,7 +117,7 @@ let createTree ns tag args children =
       | k, Property o ->
           props.Add(k, o)
       | k, Event f ->
-          props.Add ("on" + k, box (fun o -> f (getProperty o "target") (event()) ))
+          props.Add ("on" + k, box (fun o -> f (Common.getProperty o "target") (Common.event()) ))
     let attrs = JsInterop.createObj attrs
     let ns = if ns = null || ns = "" then [] else ["namespace", box ns]
     let props = JsInterop.createObj (Seq.append (ns @ ["attributes", attrs]) props)
@@ -185,7 +182,7 @@ let rec render node =
       for c, _ in rc do el.appendChild(c) |> ignore
       for k, a in attrs do 
         match a with
-        | Property(o) -> setProperty el k o
+        | Property(o) -> Common.setProperty el k o
         | Attribute(v) -> el.setAttribute(k, v)
         | Event(f) -> () //el.addEventListener(k, U2.Case1(EventListener(f el)))
       let onRender () = 
@@ -249,16 +246,7 @@ let (=!>) k f = k, Event(f)
 type El(ns) = 
   member x.Namespace = ns
   static member (?) (el:El, n:string) = fun a b ->
-    let n, f = 
-      if n <> "chosen" then n, None
-      else "select", Some (fun el ->
-        chosen el
-        for k, v in a do
-          match v with
-          | Event f -> on el k (fun () -> f el (event()))
-          | _ -> ()
-      )
-    Element(el.Namespace, n, Array.ofList a, Array.ofList b, f)
+    Element(el.Namespace, n, Array.ofList a, Array.ofList b, None)
 
   member x.delayed sym body f =
     Delayed(sym, body, f)

@@ -1,23 +1,24 @@
 import { scale as s, compost as c } from "./main.fs"
+import { elections, gbpusd, gbpeur, iris } from "./data.js"
 
-let elections = 
-  [ { party:"Conservative", color:"#1F77B4", y17:317, y19:365}, 
-    { party:"Labour", color:"#D62728", y17:262, y19:202},
-    { party:"LibDem", color:"#FF7F0E", y17:12, y19:11}, 
-    { party:"SNP", color:"#BCBD22", y17:35, y19:48}, 
-    { party:"Green", color:"#2CA02C", y17:1, y19:1}, 
-    { party:"DUP", color:"#8C564B", y17:10, y19:8} ]
+// Calculate bins of a histogram. The function splits the data into 10
+// equally sized bins, counts the values in each bin and returns an array
+// of three-element arrays with start of the bin, end of the bin and count
+function bins(data) {
+  let lo = Math.min(...data), hi = Math.max(...data);
+  let bins = {}
+  for(var i=0; i<data.length; i++) {
+    let k = Math.round((data[i]-lo)/(hi-lo)*9);
+    if (bins[k]==undefined) bins[k]=1; else bins[k]++;
+  }
+  let keys = Object.keys(bins).map(k => k*1).sort()
+  return keys.map(k => 
+    [ lo + (hi - lo) * (k / 10), 
+      lo + (hi - lo) * ((k + 1) / 10), bins[k]]);
+}
 
-let gbpusd = 
-  [ 1.3206, 1.3267, 1.312, 1.3114, 1.3116, 1.3122, 1.3085, 1.3211, 1.3175, 1.3136, 1.3286, 1.3231, 1.3323, 1.3215, 1.3186, 1.2987, 1.296, 
-    1.2932, 1.2885, 1.3048, 1.3287, 1.327, 1.3429, 1.3523, 1.3322, 1.3152, 1.3621, 1.4798, 1.4687, 1.467, 1.4694, 1.4293, 1.4064, 1.4196, 
-    1.4114, 1.4282, 1.4334, 1.4465, 1.4552, 1.456, 1.4464, 1.4517, 1.4447, 1.4414 ].reverse() 
-
-    let gbpeur = 
-  [ 1.1823, 1.1867, 1.1838, 1.1936, 1.1944, 1.1961, 1.1917, 1.2017, 1.1969, 1.193, 1.2006, 1.1952, 1.1998, 1.1903, 1.1909, 1.1759, 1.1743, 
-    1.168, 1.1639, 1.175, 1.1929, 1.192, 1.2081, 1.2177, 1.2054, 1.1986, 1.2254, 1.3039, 1.3018, 1.3018, 1.296, 1.2709, 1.2617, 1.2634, 
-    1.2589, 1.2639, 1.2687, 1.2771, 1.2773, 1.2823, 1.2726, 1.2814, 1.2947, 1.2898 ].reverse()
-    
+// Makes a color given in "#rrggbb" format darker or lighter
+// (by multiplying each component by the specified number k)
 function adjust(color, k) {
   let r = parseInt(color.substr(1, 2), 16)
   let g = parseInt(color.substr(3, 2), 16)
@@ -26,6 +27,9 @@ function adjust(color, k) {
   return "#" + ((f(r) << 16) + (f(g) << 8) + (f(b) << 0)).toString(16);
 }
 
+// A derived Compost operation that adds a title to any given chart.
+// This works by creating text element and using 'nest' to allocate top 
+// 15% of space for the title and the remaining 85% of space for the title.
 function title(text, chart) {
   let title = c.scale(s.continuous(0, 100), s.continuous(0, 100), 
     c.font("11pt arial", "black", c.text(50, 80, text)))
@@ -35,9 +39,21 @@ function title(text, chart) {
   ])
 }
 
+// Creates a bar of height 'y' that is witin a categorical value 'x' 
+// starting at the offset 'f' and ending at the offset 't'.
 function partColumn(f, t, x, y) { 
-  return c.shape([ [ [x,f], y ], [ [x,t], y ], [ [x,t], f ], [ [x,f], t ] ])
+  return c.shape([ [ [x,f], y ], [ [x,t], y ], [ [x,t], 0 ], [ [x,f], 0 ] ])
 }
+
+// Create a line using array index as the X value and array value as the Y value
+function line(data) { 
+  return c.line(data.map((v, i) => [i, v]));
+}
+
+
+// ----------------------------------------------------------------------------
+// DEMO #1: United Kingdom general elections (2017 vs 2019)
+// ----------------------------------------------------------------------------
 
 let bars =
   c.axes("left bottom", c.scaleY(s.continuous(0, 410), c.overlay(
@@ -51,14 +67,16 @@ let bars =
 
 c.render("out1", title("United Kingdom general elections (2017 vs 2019)", bars))
 
-function line(data) { 
-  return c.line(data.map((v, i) => [i, v]));
-}
+// ----------------------------------------------------------------------------
+// DEMO #2: GBP-USD and GBP-EUR rates (June-July 2016)
+// ----------------------------------------------------------------------------
 
 function body(lo, hi, data) {
   return c.axes("left right bottom", c.overlay([
-    c.fillColor("#1F77B460",  c.shape([ [0,lo], [16,lo], [16,hi], [0,hi] ])),
-    c.fillColor("#D6272860",  c.shape([ [data.length-1,lo], [16,lo], [16,hi], [data.length-1,hi] ])),
+    c.fillColor("#1F77B460",  c.shape(
+      [ [0,lo], [16,lo], [16,hi], [0,hi] ])),
+    c.fillColor("#D6272860",  c.shape(
+      [ [data.length-1,lo], [16,lo], [16,hi], [data.length-1,hi] ])),
     c.strokeColor("#202020", line(data))
   ]))
 }
@@ -69,3 +87,61 @@ let rates = c.overlay([
 ])
 
 c.render("out2", title("GBP-USD and GBP-EUR rates (June-July 2016)", rates))
+
+// ----------------------------------------------------------------------------
+// DEMO #3: Pairplot comparing features of the iris data set
+// ----------------------------------------------------------------------------
+
+let irisColors = {Setosa:"blue", Virginica:"green", Versicolor:"red" }
+let cats = ["sepal_width", "petal_length", "petal_width"]
+
+let pairplot = 
+  c.overlay(cats.map(x => cats.map(y => 
+    c.nest([x, 0], [x, 1], [y, 0], [y, 1], 
+      c.axes("left bottom", c.overlay(
+        x == y 
+        ? bins(iris.map(i => i[x])).map(b => 
+            c.fillColor("#808080", c.shape(
+              [ [b[0], b[2]], [b[1], b[2]], [b[1], 0], [b[0], 0] ])) )
+        : iris.map(i => c.strokeColor(irisColors[i.species], 
+            c.bubble(i[x], i[y], 1, 1)))
+      ))))).flat())
+
+c.render("out3", title("Pairplot comparing sepal width, " + 
+  "petal length and petal width of irises", pairplot))
+
+// ----------------------------------------------------------------------------
+// DEMO #4: Interactive 'You Draw' chart that lets you resize bars
+// ----------------------------------------------------------------------------
+
+let partyColors = {}
+for(var i = 0; i < elections.length; i++) 
+  partyColors[elections[i].party] = elections[i].color;
+
+function update(state, evt) {
+  switch (evt.kind) {
+    case 'set':
+      if (!state.enabled) return state;
+      let newValues = state.values.map(kv => 
+        kv[0] == evt.party ? [kv[0], evt.newValue] : kv)
+      return { ...state, values: newValues }
+    case 'enable':
+      return { ...state, enabled: evt.enabled }
+  }
+}
+
+function render(trigger, state) {
+  return title("Drag the bars to guess UK election results!",
+    c.axes("left bottom", c.scaleY(s.continuous(0, 400),
+      c.on({
+        mousedown: () => trigger({ kind:'enable', enabled:true }),
+        mouseup: () => trigger({ kind:'enable', enabled:false }),
+        mousemove: (x, y) => trigger({ kind:'set', party:x[0], newValue:y })
+      }, c.overlay(state.values.map(kv =>
+        c.fillColor(partyColors[kv[0]], 
+          c.padding(0, 10, 0, 10, c.column(kv[0], kv[1]))) ))
+    ))))
+}
+
+let init = { enabled:false, values: elections.map(e => [e.party, e.y19]) }
+c.interactive("out4", init, update, render)

@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "build": "webpack",
     "start": "webpack-dev-server"
   },
   "dependencies": {
