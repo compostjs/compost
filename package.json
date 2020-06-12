@@ -8,6 +8,7 @@
     "@babel/core": "^7.8.4",
     "fable-compiler": "^2.4.15",
     "fable-loader": "^2.1.8",
+    "fable-splitter": "^2.2.0",
     "virtual-dom": "^2.1.1",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.11",
