@@ -1,0 +1,8 @@
+.ionide
+docs
+public
+src
+compost.gif
+Nuget.config
+webpack.config.js
+node_modules
