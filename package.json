@@ -8,7 +8,7 @@
     "build": "fable-splitter src/compost.fsproj -o dist",
     "prepublish": "npm run build",
     "start": "webpack-dev-server",
-    "release": "np"
+    "release": "np --yolo --no-release-draft"
   },
   "repository": {
     "type": "git",
@@ -36,8 +36,5 @@
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3"
-  },
-  "np": {
-    "yolo": true
   }
 }
