@@ -4,8 +4,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="html.fs" />
+    <Compile Include="core.fs" />
     <Compile Include="compost.fs" />
-    <Compile Include="main.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fable.Browser.Dom" Version="1.1.0" />
