@@ -32,6 +32,6 @@ JavaScript file that is added to the `releases` folder of the `docs` with the cu
 version number in the filename (and also updates the `latest` file).
 This should all happen automatically when using `npm run release`.
 
-# What is the story behind the name??
+## What is the story behind the name??
 
 ![Compost](https://github.com/compostjs/compost/raw/master/compost.gif)
