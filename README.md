@@ -30,6 +30,7 @@ to generate nice JavaScript files for a NPM package in the `dist` folder, which 
 packaged and published on NPM. Running `npm run standalone` builds a standalone
 JavaScript file that is added to the `releases` folder of the `docs` with the current
 version number in the filename (and also updates the `latest` file).
+This should all happen automatically when using `npm run release`.
 
 # What is the story behind the name??
 

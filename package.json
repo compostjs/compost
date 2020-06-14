@@ -8,8 +8,7 @@
     "standalone": "webpack --config src/webpack.pub.js && webpack --config src/webpack.latest.js",
     "build": "fable-splitter src/compost/compost.fsproj -o dist",
     "start": "webpack-dev-server --config src/webpack.dev.js",
-    "prepublish": "npm run build",
-    "postpublish": "npm run standalone && git commit -am \"Update standalone release file in docs\"",
+    "prepublish": "npm run standalone && git commit -am \"Update standalone release file in docs\" && npm run build",
     "release": "np --yolo --no-release-draft"
   },
   "repository": {
