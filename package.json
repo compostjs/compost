@@ -9,7 +9,7 @@
     "build": "fable-splitter src/compost/compost.fsproj -o dist",
     "start": "webpack-dev-server --config src/webpack.dev.js",
     "prepublish": "npm run build",
-    "postpublish": "git commit -am \"Update standalone release file in docs\"",
+    "postpublish": "npm run standalone && git commit -am \"Update standalone release file in docs\"",
     "release": "np --yolo --no-release-draft"
   },
   "repository": {
