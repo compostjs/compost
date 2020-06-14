@@ -20,7 +20,7 @@ code.hljs {
   background:transparent;
 }
 pre, code {
-  font-family:'Roboto Mono' monospace; 
+  font-family:'Roboto Mono', monospace; 
   font-size:10pt;
 }
 pre {
