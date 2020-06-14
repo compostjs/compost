@@ -1,5 +1,6 @@
 .ionide
 node_modules/
-src/obj/
-src/bin/
+src/compost/obj/
+src/compost/bin/
+docs/_site
 dist/

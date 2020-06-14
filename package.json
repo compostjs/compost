@@ -5,9 +5,11 @@
   "author": "Tomas Petricek",
   "license": "MIT",
   "scripts": {
+    "docs": "webpack --config src/webpack.docs.js",
+    "standalone": "webpack --config src/webpack.pub.js && webpack --config src/webpack.latest.js",
     "build": "fable-splitter src/compost.fsproj -o dist",
+    "start": "webpack-dev-server --config src/webpack.dev.js",
     "prepublish": "npm run build",
-    "start": "webpack-dev-server",
     "release": "np --yolo --no-release-draft"
   },
   "repository": {

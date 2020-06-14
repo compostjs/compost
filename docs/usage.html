@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>How to use Compost in your projects - Compost.js</title>
+  <meta name="author" content="Tomas Petricek">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="lib/style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html">Home</a>
+      <a href="usage.html">Usage</a>
+      <a href="demos.html">Demos</a>
+      <a href="api.html">API Docs</a>
+      <a href="https://github.com/compostjs/compost">GitHub</a>
+    </div>
+  </nav>
+  <section>
+    <div class="container">
+      <h1>How to use Compost in your projects</h1>
+
+      <h2>Using standalone JavaScript file</h2>
+      <p>If you want to experiment with Compost, the easiest option is to add a reference
+      to the latest version of Compost using a standalone JavaScript file from GitHub.
+      This defines global variables <code>c</code> (for creating Compost charts)
+      and <code>s</code> (for defining scales) that you can use in your scripts.
+      The following complete HTML file creates a basic line chart: </p>
+      <pre><code class="langauge-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;script src="https://compostjs.github.io/compost/releases/compost-latest.js"&gt;
+  &lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div id="demo" style="width:600px;height:300px"&gt;&lt;/div&gt;
+  &lt;script type="text/javascript"&gt;
+    let d = c.axes("left bottom",
+      c.line([[1,1],[2,4],[3,9],[4,16],[5,25],[6,36] ]))
+    c.render("demo", d)
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+      <p>For production use, you should <a href="https://compostjs.github.io/compost/releases/compost-latest.js">download the file</a>
+        and add it to your project rather than referencing it directly from GitHub. You can
+        get a specific version by replacing <code>latest</code> with, for example, <code>0.0.2</code>.
+
+      <h2>Using Compost from a Node.js project</h2>
+      <p>If you want to reference Compost.js properly, you can get it from the NPM repository
+        by installing the <a href="https://www.npmjs.com/package/compostjs">compostjs</a> package.
+        Just run the following command:</p>
+      <pre><code>npm install compostjs</code></pre>
+
+      <p>Then you can use Compost in your project by importing the two exported
+        global variables <code>compost</code> (for access to Compost primitives)
+        and <code>scale</code> (for creating scales) as follows:</p>
+
+<pre><code class="lang-javascript">import { scale as s, compost as c } from "compostjs"
+
+let d = c.axes("left bottom",
+  c.line([[1,1],[2,4],[3,9],[4,16],[5,25],[6,36] ]))
+c.render("demo", d)
+</code></pre>
+
+      <p>To see how this works, you can also look at the complete Node.js sample project
+        <a href="https://github.com/compostjs/compost-node-demos/">compost-node-demos</a>
+        on GitHub. To clone the repository and run the demos, you can run the following
+        commands. Once you do this, you'll see the running demos at
+        <a href="http://localhost:8080">http://localhost:8080</a>.
+
+      <pre><code>git clone https://github.com/compostjs/compost-node-demos.git
+cd compost-node-demos
+npm install
+npm start</code></pre>
+
+      <h2>Learn more about Compost</h2>
+      <ul>
+        <li><a href="demos.html">Further demos</a> - Explore larger samples showing
+          Compost in action.</li>
+        <li><a href="api.html">API Reference</a> - Documentation for the 15 primitives
+          that you need to use Compost.</li>
+        <li><a href="https://github.com/compostjs/compost">Compost source code on GitHub</a> -
+          Compost is implemented in just 700 lines of F#.</li>
+        <li><a href="paper.pdf">Read a draft paper about Compost</a> -
+          Longer, but explains Compost in full detail.</li>
+        <li>Get in touch with the author at <a href="https://twitter.com/tomaspetricek">@tomaspetricek</a>
+          or using email <a href="mailto:tomas@tomasp.net">tomas@tomasp.net</a>.</li>
+      </ul>
+
+    </div>
+  </section>
+  <script src="releases/compost-latest.js"></script>
+  <script src="lib/docs.js?xx"></script>
+</body>
+</html>

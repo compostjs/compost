@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/project/docs.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/project/standalone.js");
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -803,15 +803,15 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) *
 
 /***/ }),
 
-/***/ "./src/project/docs.js":
-/*!*****************************!*\
-  !*** ./src/project/docs.js ***!
-  \*****************************/
+/***/ "./src/project/standalone.js":
+/*!***********************************!*\
+  !*** ./src/project/standalone.js ***!
+  \***********************************/
 /*! no exports provided */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _compost_compost_fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../compost/compost.fs */ \"./src/compost/compost.fs\");\n/* harmony import */ var _data_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./data.js */ \"./src/project/data.js\");\n\r\n\r\n\r\nvar pres = document.getElementsByTagName(\"pre\");\r\nfor(var i = 0; i < pres.length; i++) {\r\n  eval(\"(function(c,s,elections,gbpusd,gbpeur,iris) { \" + pres[i].innerText + \"})\")\r\n    (_compost_compost_fs__WEBPACK_IMPORTED_MODULE_0__[\"compost\"], _compost_compost_fs__WEBPACK_IMPORTED_MODULE_0__[\"scale\"], _data_js__WEBPACK_IMPORTED_MODULE_1__[\"elections\"], _data_js__WEBPACK_IMPORTED_MODULE_1__[\"gbpusd\"], _data_js__WEBPACK_IMPORTED_MODULE_1__[\"gbpeur\"], _data_js__WEBPACK_IMPORTED_MODULE_1__[\"iris\"]);\r\n}\r\n\n\n//# sourceURL=webpack:///./src/project/docs.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _compost_compost_fs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../compost/compost.fs */ \"./src/compost/compost.fs\");\n/* harmony import */ var _data_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./data.js */ \"./src/project/data.js\");\n\r\n\r\n\r\nwindow.c = _compost_compost_fs__WEBPACK_IMPORTED_MODULE_0__[\"compost\"];\r\nwindow.s = _compost_compost_fs__WEBPACK_IMPORTED_MODULE_0__[\"scale\"];\r\n\n\n//# sourceURL=webpack:///./src/project/standalone.js?");
 
 /***/ }),
 

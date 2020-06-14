@@ -3,18 +3,14 @@
 // https://github.com/fable-compiler/webpack-config-template
 
 var path = require("path");
+var pkg = require('../package.json')
 
 module.exports = {
     mode: "development",
-    entry: "./src/demos.js",
+    entry: "./src/project/standalone.js",
     output: {
-        path: path.join(__dirname, "./dist"),
-        filename: "bundle.js",
-    },
-    devServer: {
-        publicPath: "/",
-        contentBase: "./public",
-        port: 8080,
+        path: path.join(__dirname, "../docs/releases"),
+        filename: "compost-" + pkg.version + ".js",
     },
     module: {
         rules: [{

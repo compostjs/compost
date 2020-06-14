@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>How to use Compost in your projects - Compost.js</title>
+  <meta name="author" content="Tomas Petricek">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="lib/style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html">Home</a>
+      <a href="usage.html">Usage</a>
+      <a href="demos.html">Demos</a>
+      <a href="api.html">API Docs</a>
+      <a href="https://github.com/compostjs/compost">GitHub</a>
+    </div>
+  </nav>
+  <section>
+    <div class="container">
+      <h1>Compost API reference</h1>
+
+      <ul class="nosep">
+        <li><a href="#coords">Coordinates: Continuous and categorical coordinates</a></li>
+        <li><a href="#s-scales">Scales: Categorical and continuous</a></li>
+        <li><a href="#c-basic">Compost primitives: Basic shapes</a></li>
+        <li><a href="#c-visual">Compost primitives: Specifying visual properties</a></li>
+        <li><a href="#c-scale">Compost primitives: Transforming scales</a></li>
+        <li><a href="#c-combine">Compost primitives: Combining shapes and axes</a></li>
+        <li><a href="#c-inter">Compost primitives: Rendering charts and interactivity</a></li>
+      </ul>
+
+      <h2>Coordinates: Continuous and categorical coordinates<a name="coords"></a></h2>
+      <p>When specifying coordinates in Compost, you do so using a value from your domain
+        rather than using a value in pixels. A value can be either categorical (such as
+        a political party or a country) or a continuous (such as an exchange rate or a year).</p>
+      <p>When specifying a location using a continuous value, you specify just a number.
+        When using a categorical value, Compost associates a whole area to each category and
+        so you need to give a category together with a number specifying a location within
+        this area. The following are valid ways of specifying a <code>Coord</code>:</p>
+
+      <pre><code class="lang-javascript">// A continuous value such as exchange rate
+let v1 = 1.52
+
+// A continuous value such as a number of MPs
+let v2 = 152
+
+// Leftmost corner of an area associated with categorical value
+let v3 = ["Labour", 0]
+
+// Middle of an area associated with categorical value
+let v4 = ["Labour", 0.5]
+</code></pre>
+      <p>In other words, <code>Coord</code> can be either a number or an array of two
+        elements containing a string (the name of the category) and a number (between 0 and 1).</p>
+      <p>When you want to specify a location on a chart, you need an x and y coordinate.
+        A <code>Point</code> in the following documentation refers to an array of two
+        <code>Coord</code> elements, one for x and one for y coordinate. The following gives
+      some examples of valid points:</p>
+
+      <pre><code class="lang-javascript">// A pair of continuous values
+let p1 = [ 3.14, Math.sin(3.14) ]
+
+// A point with categorical X and continuous Y
+let p2 = [ ["Labour", 0.5], 152 ]
+
+// A list specifying a several points on a line
+let l1 = [ [0, Math.sin(0)], [1.57, Math.sin(1.57)],
+  [3.14, Math.sin(3.14)], [4.71, Math.sin(4.71)]  ]
+
+// A list specifying four corners of a rectangle
+let s1 = [ [["Labour", 0], 0], [["Labour", 0], 152],
+  [["Labour", 1], 152], [["Labour", 1], 0] ]
+</code></pre>
+
+      <h2>Scales: Categorical and continuous<a name="s-scales"></a></h2>
+      <table class="docs">
+      <tr><th>s.continuous</th><td><code class="f">float * float -> Scale</code><p>Creates a continuous scale that can contain value in the specified range</p></td></tr>
+      <tr><th>s.categorical</th><td><code class="f">string[] -> Scale</code><p>Creates a categorical scale that can contain categorical values specified in the given array of strings</p></td></tr>
+      </table>
+
+      <h2>Compost primitives: Basic shapes<a name="c-basic"></a></h2>
+      <table class="docs">
+      <tr><th>c.text</th><td><code class="f">Coord * Coord * string * ?string * ?float -> Shape</code><p>Draws a text specified as the third parameter at a given x and y coordinates specified by the first two parameters. The last two optional parameters specify alignment (baseline, hanging, middle, start, end, center) and rotation in radians.</p></td></tr>
+      <tr><th>c.bubble</th><td><code class="f">Coord * Coord * float * float -> Shape</code><p>Creates a bubble (point) at a specified x and y coordinates. The last two parameters specify the width and height of the bubble in pixels.</p></td></tr>
+      <tr><th>c.shape</th><td><code class="f">Point[] -> Shape</code><p>Creates a filled shape. The shape is specified as an array of points (see the section on coordinates).</p></td></tr>
+      <tr><th>c.line</th><td><code class="f">Point[] -> Shape</code><p>Creates a line drawn using the current stroke color. The line is specified as an array of points (see the section on coordinates)</p></td></tr>
+      <tr><th>c.column</th><td><code class="f">string * float -> Shape</code><p>Creates a filled rectangle for use in a column chart. This is a shorthand for <code>c.shape</code>. It creates a rectangle that fills the whole area for a given categorical value and has a specified height.</p></td></tr>
+      <tr><th>c.bar</th><td><code class="f">float * string -> Shape</code><p>Creates a filled rectangle for use in a bar chart. This is a shorthand for <code>c.shape</code>. It creates a rectangle that fills the whole area for a given categorical value and has a specified width.</p></td></tr>
+      </table>
+
+      <h2>Compost primitives: Specifying visual properties<a name="c-visual"></a></h2>
+      <table class="docs">
+      <tr><th>c.fillColor</th><td><code class="f">string * Shape -> Shape</code><p>Sets the fill color to be used for all shapes drawn using <code>c.shape</code> in the given shape.</p></td></tr>
+      <tr><th>c.strokeColor</th><td><code class="f">string * Shape -> Shape</code><p>Sets the line color to be used for all lines drawn using <code>c.line</code> in the given shape.</p></td></tr>
+      <tr><th>c.font</th><td><code class="f">string * string * Shape -> Shape</code><p>Sets the font and text color to be used for all text occurring in the given shape.</p></td></tr>
+      </table>
+
+      <h2>Compost primitives: Transforming scales<a name="c-scale"></a></h2>
+      <table class="docs">
+      <tr><th>c.nest</th><td><code class="f">Coord * Coord * Coord * Coord * Shape -> Shape</code><p>Creates a shape that occupies an explicitly specified space using the four coordinates as left and right X value and top and bottom Y values. Inside this explicitly specified space, the nested shape is drawn, using its own scales.</p></td></tr>
+      <tr><th>c.nestX</th><td><code class="f">Coord * Coord * Shape -> Shape</code><p>Same as above, but this primitive only overrides the X scale of the nested shape while the Y scale is left unchanged and can be shared with other shapes.</p></td></tr>
+      <tr><th>c.nestY</th><td><code class="f">Coord * Coord * Shape -> Shape</code><p>Same as above, but this primitive only overrides the Y scale of the nested shape while the X scale is left unchanged and can be shared with other shapes.</p></td></tr>
+      <tr><th>c.scale</th><td><code class="f">Scale * Scale * Shape -> Shape</code><p>Override the automatically inferred scale with an explicitly specified one. You can use this to define a custom minimal and maximal value. To create scales use <code>s.continuous</code> or <code>s.categorical</code>.</p></td></tr>
+      <tr><th>c.scaleX</th><td><code class="f">Scale * Shape -> Shape</code><p>Override the automatically inferred X scale (as above). </p></td></tr>
+      <tr><th>c.scaleY</th><td><code class="f">Scale * Shape -> Shape</code><p>Override the automatically inferred Y scale (as above).</p></td></tr>
+      <tr><th>c.padding</th><td><code class="f">float * float * float * float * Shape -> Shape</code><p>Adds a padding around the given shape. The padding is specified as top, right, bottom, left. This will subtract the padding from the available space and draw the nested shape into the smaller space.</p></td></tr>
+      </table>
+
+      <h2>Compost primitives: Combining shapes and axes<a name="c-combine"></a></h2>
+      <table class="docs">
+      <tr><th>c.overlay</th><td><code class="f">Shape[] -> Shape</code><p>Compose a given array of shapes by drawing them all in the same chart area. This calculates the scale of all nested shapes and those are then automatically aligned based on their coordinates.</p></td></tr>
+      <tr><th>c.axes</th><td><code class="f">string * Shape -> Shape</code><p>Draw axes around a given shape. The string parameter can be any string containing the words left, right, bottom and/or top, for example using space as a separator.</p></td></tr>
+      </table>
+
+      <h2>Compost primitives: Rendering charts and interactivity<a name="c-inter"></a></h2>
+      <table class="docs">
+      <tr><th>c.render</th><td><code class="f">string * Shape -> unit</code><p>Render a given chart on a HTML element specified by a given ID. When called, Compost will get the width and height of the element and render a chart using this as the size.</p></td></tr>
+      <tr><th>c.on</th><td><code class="f">Handlers * Shape -> Shape</code><p>
+        Specify event handlers for events that occur in the specified shape. The first parameter is a JavaScript object with fields
+        representing individual handlers. The supported handlers are <code>mousedown</code>, <code>mouseup</code>, <code>mousemove</code>, <code>click</code>,
+        <code>touchstart</code>, <code>touchmove</code>. Those are called with x and y coordinates of the event. You can also specify <code>touchend</code>
+        and <code>mouseleave</code> handlers, but those do not get coordinates of the event.
+        For example of how to specify handlers, see the <a href="demos.html#youdraw-bar">You draw it</a> demo.</p></td></tr>
+      <tr><th>c.interactive</th><td><code class="f">string * State * (State -> Event -> State) * ((Event -> unit) -> State -> Shape) -> unit</code><p>
+        Create an interactive chart using a given HTML element ID. For an example of how this works,
+        see the <a href="demos.html#youdraw-bar">You draw it</a> demo. This is based on the <a href="https://guide.elm-lang.org/architecture/">Elm architecture</a>
+        (also known Model-View-Update). The last three parameters specify the initial state,
+        an update function (given a state and an event, produce a new state) and a view function
+        (given a function to trigger an event and a current state, produce a shape).
+      </p></td></tr>
+      </table>
+
+
+      <h2>Learn more about Compost</h2>
+      <ul>
+        <li><a href="usage.html">How to use Compost.js</a> - How to reference
+          Compost from your Node or JavaScript project.</li>
+        <li><a href="demos.html">Further demos</a> - Explore larger samples showing
+          Compost in action.</li>
+        <li><a href="https://github.com/compostjs/compost">Compost source code on GitHub</a> -
+          Compost is implemented in just 700 lines of F#.</li>
+        <li><a href="paper.pdf">Read a draft paper about Compost</a> -
+          Longer, but explains Compost in full detail.</li>
+        <li>Get in touch with the author at <a href="https://twitter.com/tomaspetricek">@tomaspetricek</a>
+          or using email <a href="mailto:tomas@tomasp.net">tomas@tomasp.net</a>.</li>
+      </ul>
+
+    </div>
+  </section>
+  <script src="releases/compost-latest.js"></script>
+  <script src="lib/docs.js?xx"></script>
+</body>
+</html>

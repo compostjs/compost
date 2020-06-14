@@ -26,6 +26,7 @@ type Shape = Shape<1, 1>
 
 type JsScale = 
   abstract continuous : float * float -> Scale
+  abstract categorical : string[] -> Scale
 
 type JsCompost =
   abstract nestX : obj * obj * Shape -> Shape
@@ -41,6 +42,7 @@ type JsCompost =
   abstract padding : float * float * float * float * Shape -> Shape
   abstract text : obj * obj * string * string * float -> Shape
   abstract column : string * float -> Shape
+  abstract bar : float * string -> Shape
   abstract bubble : obj * obj * float * float -> Shape
   abstract shape : obj[][] -> Shape
   abstract line : obj[][] -> Shape
@@ -51,7 +53,8 @@ type JsCompost =
 
 let scale = 
   { new JsScale with 
-      member x.continuous(lo, hi) = Continuous(CO lo, CO hi) }
+      member x.continuous(lo, hi) = Continuous(CO lo, CO hi) 
+      member x.categorical(cats) = Categorical [| for c in cats -> CA c |] }
   
 let compost = 
   { new JsCompost with
@@ -67,6 +70,7 @@ let compost =
       member x.strokeColor(c, s) = Derived.StrokeColor(c, s) 
       member x.font(f, c, s) = Derived.Font(f, c, s) 
       member x.column(xp, yp) = Derived.Column(CA xp, CO yp)
+      member x.bar(xp, yp) = Derived.Bar(CO xp, CA yp)
       member x.bubble(xp, yp, w, h) = Shape.Bubble(parseValue xp, parseValue yp, w, h)
       member x.text(xp, yp, t, s, r) = 
         let r = if box r = null then 0.0 else r
@@ -87,7 +91,7 @@ let compost =
               | "mousemove" -> MouseMove(fun me (x, y) -> f [| box (formatValue x); box (formatValue y); box me |])
               | "touchstart" -> TouchStart(fun me (x, y) -> f [| box (formatValue x); box (formatValue y); box me |])
               | "touchmove" -> TouchMove(fun me (x, y) -> f [| box (formatValue x); box (formatValue y); box me |])
-              | "click" -> Click(fun me (x, y) -> f [| box (formatValue x); box (formatValue y); box me |])
+              | "click"   -> Click(fun me (x, y) -> f [| box (formatValue x); box (formatValue y); box me |])
               | "mouseleave" -> MouseLeave(fun me -> f [| me |])
               | "touchend" -> TouchEnd(fun me -> f [| me |])
               | s -> failwithf "Unsupported event type '%s' passed to the 'on' primitive." s

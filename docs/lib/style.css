@@ -1,0 +1,128 @@
+@import url(http://fonts.googleapis.com/css?family=Kreon:300,400,700|PT+Sans:400,700,400italic|Roboto+Mono);
+
+section, div, html, body { margin:0px; padding:0px; }
+body {
+  padding-bottom:150px;
+}
+h1, h2, h3, h4 {
+  font-family:Kreon;
+  font-weight:400;
+}
+h1 {
+  font-size:26pt;
+  margin:0px 0px 25px 0px;
+}
+h2 {
+  font-size:20pt;
+  margin:35px 0px 10px 0px;
+}
+code.hljs {
+  background:transparent;
+}
+pre, code {
+  font-family:'Roboto Mono';
+  font-size:10pt;
+}
+pre {
+  margin-left:20px;
+  margin-right:20px;
+  margin-bottom:20px;
+  white-space:pre-wrap;
+  margin-top:0px;
+}
+pre.compost {
+  margin-left:50px;
+  margin-right:50px;
+  margin-bottom:30px;
+}
+p {
+  font-size:13pt;
+  max-width:800px;
+  margin:0px 0px 15px 0px;
+}
+li {
+  font-size:13pt;
+  padding:0px;
+  margin:0px 0px 10px 30px;
+}
+ul {
+  max-width:800px;
+  padding:0px;
+  margin:0px 0px 25px 0px;
+}
+ul.nosep li {
+  margin-bottom:5px;
+}
+body {
+  font-family:'PT Sans', sans-serif;
+}
+.container {
+  max-width:960px;
+  margin:0px auto 0px auto;
+}
+section {
+  padding-top:50px;
+}
+nav {
+  background:white;
+  font-size:11pt;
+}
+nav .container {
+  border-bottom:solid 1px #e0e0e0;
+  padding:15px 0px 15px 0px;
+}
+a, a:visited {
+  color:#e06030;
+  text-decoration:none;
+}
+a:hover {
+  color:#ff8050;
+  text-decoration:none;
+}
+nav a {
+  margin-right:30px;
+}
+nav, nav a, nav a:visited {
+  font-family:Kreon;
+  color:#404040;
+  text-decoration:none;
+  text-transform:uppercase;
+}
+nav a:hover {
+  color:#ff8050;
+}
+.buttons {
+  max-width:800px;
+  padding-right:50px;
+  text-align:center;
+  padding-bottom:10px;
+}
+.buttons a, .buttons a:visited {
+  background:#ff8050;
+  color:white;
+  padding:10px 30px 10px 30px;
+  text-align:center;
+  display:inline-block;
+  margin:0px 15px 0px 15px;
+  border-radius:10px;
+  font-family:Kreon;
+  font-size:14pt;
+}
+.buttons a:hover {
+  background:#e06030;
+}
+table.docs {
+  margin:20px 0px 10px 0px;
+}
+table.docs th {
+  vertical-align:top;
+  text-align:left;
+  padding-right:10px;
+  min-width:120px;
+}
+table.docs p {
+  margin:5px 0px 15px 0px;
+}
+table.docs code.f {
+  color:#e06030;
+}

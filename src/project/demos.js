@@ -1,4 +1,4 @@
-import { scale as s, compost as c } from "./compost.fs"
+import { scale as s, compost as c } from "../compost/compost.fs"
 import { elections, gbpusd, gbpeur, iris } from "./data.js"
 
 // Calculate bins of a histogram. The function splits the data into 10
@@ -12,8 +12,8 @@ function bins(data) {
     if (bins[k]==undefined) bins[k]=1; else bins[k]++;
   }
   let keys = Object.keys(bins).map(k => k*1).sort()
-  return keys.map(k => 
-    [ lo + (hi - lo) * (k / 10), 
+  return keys.map(k =>
+    [ lo + (hi - lo) * (k / 10),
       lo + (hi - lo) * ((k + 1) / 10), bins[k]]);
 }
 
@@ -28,10 +28,10 @@ function adjust(color, k) {
 }
 
 // A derived Compost operation that adds a title to any given chart.
-// This works by creating text element and using 'nest' to allocate top 
+// This works by creating text element and using 'nest' to allocate top
 // 15% of space for the title and the remaining 85% of space for the title.
 function title(text, chart) {
-  let title = c.scale(s.continuous(0, 100), s.continuous(0, 100), 
+  let title = c.scale(s.continuous(0, 100), s.continuous(0, 100),
     c.font("11pt arial", "black", c.text(50, 80, text)))
   return c.overlay([
     c.nest(0, 100, 85, 100, title),
@@ -39,14 +39,14 @@ function title(text, chart) {
   ])
 }
 
-// Creates a bar of height 'y' that is witin a categorical value 'x' 
+// Creates a bar of height 'y' that is witin a categorical value 'x'
 // starting at the offset 'f' and ending at the offset 't'.
-function partColumn(f, t, x, y) { 
+function partColumn(f, t, x, y) {
   return c.shape([ [ [x,f], y ], [ [x,t], y ], [ [x,t], 0 ], [ [x,f], 0 ] ])
 }
 
 // Create a line using array index as the X value and array value as the Y value
-function line(data) { 
+function line(data) {
   return c.line(data.map((v, i) => [i, v]));
 }
 
@@ -62,7 +62,7 @@ let bars =
         c.fillColor(adjust(e.color, 0.8), partColumn(0, 0.5, e.party, e.y17)),
         c.fillColor(adjust(e.color, 1.2), partColumn(0.5, 1, e.party, e.y19))
       ]))
-    )    
+    )
   )))
 
 c.render("out1", title("United Kingdom general elections (2017 vs 2019)", bars))
@@ -95,19 +95,19 @@ c.render("out2", title("GBP-USD and GBP-EUR rates (June-July 2016)", rates))
 let irisColors = {Setosa:"blue", Virginica:"green", Versicolor:"red" }
 let cats = ["sepal_width", "petal_length", "petal_width"]
 
-let pairplot = 
-  c.overlay(cats.map(x => cats.map(y => 
-    c.nest([x, 0], [x, 1], [y, 0], [y, 1], 
+let pairplot =
+  c.overlay(cats.map(x => cats.map(y =>
+    c.nest([x, 0], [x, 1], [y, 0], [y, 1],
       c.axes("left bottom", c.overlay(
-        x == y 
-        ? bins(iris.map(i => i[x])).map(b => 
+        x == y
+        ? bins(iris.map(i => i[x])).map(b =>
             c.fillColor("#808080", c.shape(
               [ [b[0], b[2]], [b[1], b[2]], [b[1], 0], [b[0], 0] ])) )
-        : iris.map(i => c.strokeColor(irisColors[i.species], 
+        : iris.map(i => c.strokeColor(irisColors[i.species],
             c.bubble(i[x], i[y], 1, 1)))
       ))))).flat())
 
-c.render("out3", title("Pairplot comparing sepal width, " + 
+c.render("out3", title("Pairplot comparing sepal width, " +
   "petal length and petal width of irises", pairplot))
 
 // ----------------------------------------------------------------------------
@@ -115,14 +115,14 @@ c.render("out3", title("Pairplot comparing sepal width, " +
 // ----------------------------------------------------------------------------
 
 let partyColors = {}
-for(var i = 0; i < elections.length; i++) 
+for(var i = 0; i < elections.length; i++)
   partyColors[elections[i].party] = elections[i].color;
 
 function update(state, evt) {
   switch (evt.kind) {
     case 'set':
       if (!state.enabled) return state;
-      let newValues = state.values.map(kv => 
+      let newValues = state.values.map(kv =>
         kv[0] == evt.party ? [kv[0], evt.newValue] : kv)
       return { ...state, values: newValues }
     case 'enable':
@@ -138,7 +138,7 @@ function render(trigger, state) {
         mouseup: () => trigger({ kind:'enable', enabled:false }),
         mousemove: (x, y) => trigger({ kind:'set', party:x[0], newValue:y })
       }, c.overlay(state.values.map(kv =>
-        c.fillColor(partyColors[kv[0]], 
+        c.fillColor(partyColors[kv[0]],
           c.padding(0, 10, 0, 10, c.column(kv[0], kv[1]))) ))
     ))))
 }

@@ -1,31 +1,109 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-  <style> button { padding:5px 20px 5px 20px; margin:10px } </style>
+  <meta charset="utf-8">
+  <title>Compost.js: Composable data visualization library</title>
+  <meta name="description" content="Compost is a data visualization library that lets you compose rich interactive
+    data visualizations from a small number of basic primitives. The library is
+    based on the functional programming idea of composable domain-specific languages.
+    Compost is simple (implemented in just 700 lines of code) and easy to understand.
+    Compost is a plain JavaScript library. You use it by writing JavaScript code that
+    generates a chart using some 15 basic Compost primitives.">
+  <meta name="author" content="Tomas Petricek">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="lib/style.css">
 </head>
-<body style="background:#ffffff">
-  <h1>DEMO #1</h1>
-  <div id="out1" style="margin-left:100px;width:400px;height:300px;"></div>
-  
-  <h1>DEMO #2</h1>
-  <div id="out2" style="margin-left:100px;width:400px;height:300px;"></div>
-  
-  <h1>DEMO #3</h1>
-  <div id="out3" style="margin-left:100px;width:600px;height:400px;"></div>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html">Home</a>
+      <a href="usage.html">Usage</a>
+      <a href="demos.html">Demos</a>
+      <a href="api.html">API Docs</a>
+      <a href="https://github.com/compostjs/compost">GitHub</a>
+    </div>
+  </nav>
+  <section>
+    <div class="container">
+      <h1><strong>Compost.js</strong>: Composable data visualization library</h1>
+      <p>Compost is a data visualization library that lets you compose rich interactive
+        data visualizations from a small number of basic primitives. The library is
+        based on the functional programming idea of composable domain-specific languages.
+        Compost is simple (implemented in just 700 lines of code) and easy to understand.
+        Compost is a plain JavaScript library. You use it by writing JavaScript code that
+        generates a chart using some 15 basic Compost primitives.
+      </p>
 
-  <h1>DEMO #4</h1>
-  <div id="out4" style="margin-left:100px;width:600px;height:400px;"></div>
+      <div class="buttons">
+        <a href="usage.html">Use Compost now!</a> <a href="demos.html">See more demos!</a>
+      </div>
 
-  <script src="bundle.js"></script>
+      <h2>Compost in 10 lines of code</h2>
+      <p>The following example is a line chart showing the GBP/USD exchange rate
+        around <a href="https://en.wikipedia.org/wiki/2016_United_Kingdom_European_Union_membership_referendum">23 June 2016</a>.
+        An interesting feature is that the chart highlights a part before the date using one
+        color and the part after the date using another color.</p>
+
+      <p>In Compost, we create the chart by composing three chart elements using
+        <code>c.overlay</code>. The three chart elements are two rectangles constructed
+        using <code>c.shape</code> and one line constructed using <code>c.line</code>.
+        Results of those functions are chart elements that can be further transformed
+        using functions such as <code>c.fillColor</code> and <code>c.strokeColor</code>
+        that change the color of the element.</p>
+      <pre class="compost"><code class="language-javascript">// Exchange rate range for the background
+let lo = 1.25, hi = 1.52;
+
+// Overlay three shapes and add axes on three sides
+let xchg = c.axes("left right bottom", c.overlay([
+  // Fill area behind first 16 values in blue
+  c.fillColor("#1F77B460",  c.shape(
+    [ [0,lo], [16,lo], [16,hi], [0,hi] ])),
+  // Fill area behind the remaining values in red
+  c.fillColor("#D6272860",  c.shape(
+    [ [gbpusd.length-1,lo], [16,lo], [16,hi], [gbpusd.length-1,hi] ])),
+  // Draw a black line using 'gbpusd' array
+  c.strokeColor("#202020", c.line(gbpusd.map((v, i) => [i, v])))
+]));
+
+// Render chart on &lt;div id="demo" /&gt;
+c.render("demo", xchg)
+</code></pre>
+        <div id="demo" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+        <p>The example illustrates two key ideas of Compost:</p>
+        <ul>
+          <li><strong>Composability.</strong> Charts are composed from a small number of
+            basic primitives such as filled shapes, lines, bubbles and text elements.
+            Those can be further transformed and composed using primitives such as overlay.
+            You can build a wide range of standard and custom charts this way. </li>
+          <li><strong>Domain units.</strong> When you specify a shape, you specify
+            coordinates in terms of domain values. For example, when creating the blue
+            shape, we say that the <em>x</em> coordinates are from 0 to 16 and the
+            <em>y</em> coordinates are from 1.25 to 1.52. The shapes are automatically
+            aligned (when using overlay) and mapped onto the available screen space.</li>
+        </ul>
+
+        <h2>Learn more about Compost</h2>
+        <ul>
+          <li><a href="usage.html">How to use Compost.js</a> - How to reference
+            Compost from your Node or JavaScript project.</li>
+          <li><a href="demos.html">Further demos</a> - Explore larger samples showing
+            Compost in action.</li>
+          <li><a href="api.html">API Reference</a> - Documentation for the 15 primitives
+            that you need to use Compost.</li>
+          <li><a href="https://github.com/compostjs/compost">Compost source code on GitHub</a> -
+            Compost is implemented in just 700 lines of F#.</li>
+          <li><a href="paper.pdf">Read a draft paper about Compost</a> -
+            Longer, but explains Compost in full detail.</li>
+          <li>Get in touch with the author at <a href="https://twitter.com/tomaspetricek">@tomaspetricek</a>
+            or using email <a href="mailto:tomas@tomasp.net">tomas@tomasp.net</a>.</li>
+        </ul>
+    </div>
+  </section>
+  <script src="releases/compost-latest.js"></script>
+  <script src="lib/docs.js?xx"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sample data visualizations built using Compost - Compost.js</title>
+  <meta name="author" content="Tomas Petricek">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="lib/style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html">Home</a>
+      <a href="usage.html">Usage</a>
+      <a href="demos.html">Demos</a>
+      <a href="api.html">API Docs</a>
+      <a href="https://github.com/compostjs/compost">GitHub</a>
+    </div>
+  </nav>
+  <section>
+    <div class="container">
+      <h1>Sample Compost data visualizations</h1>
+      <p>This page contains various examples of using Compost. The code is executed on the
+        fly, so each of the code blocks is fully standalone. This also makes some examples
+        longer, because we cannot reuse helper functions between files. All sample data
+        is defined in the <a href="https://github.com/compostjs/compost/blob/master/docs/lib/docs.js">docs.js file on GitHub</a>.
+      <ul class="nosep">
+        <li><a href="#uk-bar">Uk elections: Basic bar chart</a></li>
+        <li><a href="#uk-double">Uk elections: Double bar chart</a></li>
+        <li><a href="#uk-title">Uk elections: Double bar chart with a title</a></li>
+        <li><a href="#xchg-line">Exchange rates: Line chart with explicit scale</a></li>
+        <li><a href="#xchg-back">Exchange rates: Line chart with highlighted background</a></li>
+        <li><a href="#xchg-shared">Exchange rates: Two line charts with shared axis</a></li>
+        <li><a href="#iris-scatter">Iris dataset: Creating basic scatterplot</a></li>
+        <li><a href="#iris-hist">Iris dataset: Creating basic histogram</a></li>
+        <li><a href="#iris-pairplot">Iris dataset: Histogram and scatter in a pairplot</a></li>
+        <li><a href="#youdraw-bar">You draw it: Interactive bar chart</a></li>
+      </ul>
+
+      <h2>UK elections: Basic bar chart<a name="uk-bar"></a></h2>
+      <p>The following code sample shows how to construct a basic bar chart.
+      </p>
+<pre class="compost"><code class="lang-javascript">let bars =
+  c.axes("left bottom", c.scaleY(s.continuous(0, 410), c.overlay(
+    elections.map(e =>
+      c.padding(0, 10, 0, 10,
+        c.fillColor(e.color, c.column(e.party, e.y17))
+      ))
+    )))
+
+c.render("out1a", bars)
+</code></pre>
+      <div id="out1a" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+
+      <h2>UK elections: Double bar chart<a name="uk-double"></a></h2>
+      <p>The following chart shows two bars for each political party. The x coordinates
+        of a bar is given as <code>["Green", 0]</code> and <code>["Green", 0.5]</code>
+        for the first bar and <code>["Green", 0.5]</code> and <code>["Green", 1]</code>
+        for the second bar.
+      </p>
+<pre class="compost"><code class="lang-javascript">// Makes a color given in "#rrggbb" format darker or lighter
+// (by multiplying each component by the specified number k)
+function adjust(color, k) {
+  let r = parseInt(color.substr(1, 2), 16)
+  let g = parseInt(color.substr(3, 2), 16)
+  let b = parseInt(color.substr(5, 2), 16)
+  let f = n => n*k > 255 ? 255 : n*k;
+  return "#" + ((f(r) << 16) + (f(g) << 8) + (f(b) << 0)).toString(16);
+}
+
+// Creates a bar of height 'y' that is witin a categorical value 'x'
+// starting at the offset 'f' and ending at the offset 't'.
+function partColumn(f, t, x, y) {
+  return c.shape([ [ [x,f], y ], [ [x,t], y ], [ [x,t], 0 ], [ [x,f], 0 ] ])
+}
+
+let bars =
+  c.axes("left bottom", c.scaleY(s.continuous(0, 410), c.overlay(
+    elections.map(e =>
+      c.padding(0, 10, 0, 10, c.overlay([
+        c.fillColor(adjust(e.color, 0.8), partColumn(0, 0.5, e.party, e.y17)),
+        c.fillColor(adjust(e.color, 1.2), partColumn(0.5, 1, e.party, e.y19))
+      ]))
+    )
+  )))
+
+c.render("out1b", bars)
+</code></pre>
+      <div id="out1b" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+
+      <h2>UK elections: Double bar chart with a title<a name="uk-title"></a></h2>
+      <p>The following chart shows two bars for each political party. The x coordinates
+        of a bar is given as <code>["Green", 0]</code> and <code>["Green", 0.5]</code>
+        for the first bar and <code>["Green", 0.5]</code> and <code>["Green", 1]</code>
+        for the second bar. We also add a title using the <code>c.nest</code> primitive
+        to align the title and the chart itself.
+      </p>
+<pre class="compost"><code class="lang-javascript">// Makes a color given in "#rrggbb" format darker or lighter
+// (by multiplying each component by the specified number k)
+function adjust(color, k) {
+  let r = parseInt(color.substr(1, 2), 16)
+  let g = parseInt(color.substr(3, 2), 16)
+  let b = parseInt(color.substr(5, 2), 16)
+  let f = n => n*k > 255 ? 255 : n*k;
+  return "#" + ((f(r) << 16) + (f(g) << 8) + (f(b) << 0)).toString(16);
+}
+
+// A derived Compost operation that adds a title to any given chart.
+// This works by creating text element and using 'nest' to allocate top
+// 15% of space for the title and the remaining 85% of space for the title.
+function title(text, chart) {
+  let title = c.scale(s.continuous(0, 100), s.continuous(0, 100),
+    c.font("11pt arial", "black", c.text(50, 80, text)))
+  return c.overlay([
+    c.nest(0, 100, 85, 100, title),
+    c.nest(0, 100, 0, 85, chart)
+  ])
+}
+
+// Creates a bar of height 'y' that is witin a categorical value 'x'
+// starting at the offset 'f' and ending at the offset 't'.
+function partColumn(f, t, x, y) {
+  return c.shape([ [ [x,f], y ], [ [x,t], y ], [ [x,t], 0 ], [ [x,f], 0 ] ])
+}
+
+let bars =
+  c.axes("left bottom", c.scaleY(s.continuous(0, 410), c.overlay(
+    elections.map(e =>
+      c.padding(0, 10, 0, 10, c.overlay([
+        c.fillColor(adjust(e.color, 0.8), partColumn(0, 0.5, e.party, e.y17)),
+        c.fillColor(adjust(e.color, 1.2), partColumn(0.5, 1, e.party, e.y19))
+      ]))
+    )
+  )))
+
+c.render("out1c", title("United Kingdom general elections (2017 vs 2019)", bars))
+</code></pre>
+      <div id="out1c" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+
+<h2>Exchange rates: Line chart with explicit scale<a name="xchg-line"></a></h2>
+<p>This demo creates a basic line chart showing GBP/USD exchange rate around 23 June 2016.
+  This is done using <code>c.line</code> which takes an array of x and y coordinates.
+  We then change the line color, explicitly set the y scale (to make it look nicer)
+  and add axes.</p>
+
+<pre class="compost"><code class="lang-javascript">let rates = c.axes("left right bottom",
+    c.scaleY(s.continuous(1.25, 1.52), c.strokeColor("#202020",
+      c.line(gbpusd.map((v, i) => [i, v])))
+  ))
+c.render("out2a", rates)
+</code></pre>
+<div id="out2a" style="margin-left:50px;max-width:600px;height:200px;margin-bottom:30px;"></div>
+
+<h2>Exchange rates: Line chart with highlighted background<a name="xchg-back"></a></h2>
+<p>This is the demo from the <a href="index.html">Compost home page</a>. We create a line
+  chart, but with two areas highlighted in different colors. This is achieved by overlaying
+  two rectangular shapes and a line.</p>
+
+<pre class="compost"><code class="lang-javascript">let lo = 1.25, hi = 1.52
+let rates = c.axes("left right bottom", c.overlay([
+    c.fillColor("#1F77B460",  c.shape(
+      [ [0,lo], [16,lo], [16,hi], [0,hi] ])),
+    c.fillColor("#D6272860",  c.shape(
+      [ [gbpusd.length-1,lo], [16,lo], [16,hi], [gbpusd.length-1,hi] ])),
+    c.strokeColor("#202020",
+      c.line(gbpusd.map((v, i) => [i, v])))
+  ]))
+c.render("out2b", rates)
+</code></pre>
+<div id="out2b" style="margin-left:50px;max-width:600px;height:200px;margin-bottom:30px;"></div>
+
+<h2>Exchange rates: Two line charts with shared axis<a name="xchg-shared"></a></h2>
+<p>In this demo, we compare two different exchange rates. To do this, we create two
+  line charts and then place one above the other. The charts will share the X axis, but
+  they will have separate Y axes. This is done using the <code>c.nestY</code> primitive,
+  which nests a scale of a shape inside a newly defined locations. Here, the bottom chart
+  takes are from 0 to 50 and the top chart takes an area from 50 to 100.</p>
+
+<pre class="compost"><code class="lang-javascript">function body(lo, hi, data) {
+  return c.axes("left right bottom", c.overlay([
+    c.fillColor("#1F77B460",  c.shape(
+      [ [0,lo], [16,lo], [16,hi], [0,hi] ])),
+    c.fillColor("#D6272860",  c.shape(
+      [ [data.length-1,lo], [16,lo], [16,hi], [data.length-1,hi] ])),
+    c.strokeColor("#202020",
+      c.line(data.map((v, i) => [i, v])))
+  ]))
+}
+let rates = c.overlay([
+  c.nestY(0, 50, body(1.25, 1.52, gbpusd)),
+  c.nestY(50, 100, body(1.15, 1.32, gbpeur)),
+])
+
+c.render("out2c", rates)
+</code></pre>
+<div id="out2c" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+
+<h2>Iris dataset: Creating basic scatterplot<a name="iris-scatter"></a></h2>
+<p>This example shows how to create a scatterplot comparing two features of the
+  data from the Iris dataset. This is done by overlaying bubbles. In addition,
+  we use the Iris species to set the colors of the dots. </p>
+
+<pre class="compost"><code class="lang-javascript">let irisColors = { Setosa:"blue",
+    Virginica:"green", Versicolor:"red" }
+let x = "sepal_width", y = "petal_width"
+
+let scatter =
+  c.axes("left bottom", c.overlay(
+    iris.map(i => c.strokeColor(
+      irisColors[i.species], c.bubble(i[x], i[y], 1, 1)))
+  ))
+c.render("out3a", scatter)
+</code></pre>
+<div id="out3a" style="margin-left:50px;max-width:300px;height:200px;margin-bottom:30px;"></div>
+
+<h2>Iris dataset: Creating basic histogram<a name="iris-hist"></a></h2>
+<p>Compost does not have a built-in histogram chart, but we can create this ourselves
+  by writing a helper function that takes an array of data, splits it into bins of equal
+  size and then counts the number of data points in each bin. The results can then be
+  easily rendered by overlaying rectangular shapes.</p>
+
+<pre class="compost"><code class="lang-javascript">// Calculate bins of a histogram. The function splits the data into 10
+// equally sized bins, counts the values in each bin and returns an array
+// of three-element arrays with start of the bin, end of the bin and count
+function bins(data) {
+  let lo = Math.min(...data), hi = Math.max(...data);
+  let bins = {}
+  for(var i=0; i&lt;data.length; i++) {
+    let k = Math.round((data[i]-lo)/(hi-lo)*9);
+    if (bins[k]==undefined) bins[k]=1; else bins[k]++;
+  }
+  let keys = Object.keys(bins).map(k => k*1).sort()
+  return keys.map(k =>
+    [ lo + (hi - lo) * (k / 10),
+      lo + (hi - lo) * ((k + 1) / 10), bins[k]]);
+}
+
+let hist =
+  c.axes("left bottom", c.overlay(
+    bins(iris.map(i => i["petal_width"])).map(b =>
+      c.fillColor("#808080", c.shape(
+        [ [b[0], b[2]], [b[1], b[2]], [b[1], 0], [b[0], 0] ])) )
+    ))
+c.render("out3b", hist)
+</code></pre>
+<div id="out3b" style="margin-left:50px;max-width:500px;height:200px;margin-bottom:30px;"></div>
+
+<h2>Iris dataset: Histogram and scatter in a pairplot<a name="iris-pairplot"></a></h2>
+<p>This example combines the previous two into a single chart. It is a reimplementation
+of the <a href="https://seaborn.pydata.org/generated/seaborn.pairplot.html">seaborn library pairplot</a>
+chart. We build a matrix of chart showing a pairwise scatter-plot for all features and
+a histogram of feature distributions at the diagonal.</p>
+
+<pre class="compost"><code class="lang-javascript">// Calculate bins of a histogram. The function splits the data into 10
+// equally sized bins, counts the values in each bin and returns an array
+// of three-element arrays with start of the bin, end of the bin and count
+function bins(data) {
+  let lo = Math.min(...data), hi = Math.max(...data);
+  let bins = {}
+  for(var i=0; i&lt;data.length; i++) {
+    let k = Math.round((data[i]-lo)/(hi-lo)*9);
+    if (bins[k]==undefined) bins[k]=1; else bins[k]++;
+  }
+  let keys = Object.keys(bins).map(k => k*1).sort()
+  return keys.map(k =>
+    [ lo + (hi - lo) * (k / 10),
+      lo + (hi - lo) * ((k + 1) / 10), bins[k]]);
+}
+
+let irisColors = {Setosa:"blue", Virginica:"green", Versicolor:"red" }
+let cats = ["sepal_width", "petal_length", "petal_width"]
+
+let pairplot =
+  c.overlay(cats.map(x => cats.reverse().map(y =>
+    c.nest([x, 0], [x, 1], [y, 0], [y, 1],
+      c.axes("left bottom", c.overlay(
+        x == y
+        ? bins(iris.map(i => i[x])).map(b =>
+            c.fillColor("#808080", c.shape(
+              [ [b[0], b[2]], [b[1], b[2]], [b[1], 0], [b[0], 0] ])) )
+        : iris.map(i => c.strokeColor(irisColors[i.species],
+            c.bubble(i[x], i[y], 1, 1)))
+      ))))).flat())
+
+c.render("out3c", pairplot)
+</code></pre>
+<div id="out3c" style="margin-left:50px;max-width:700px;height:500px;margin-bottom:30px;"></div>
+
+<h2>You draw it: Interactive bar chart<a name="youdraw-bar"></a></h2>
+<p>This demo shows how to create interactive charts using Compost. It is inspired by the
+  <a href="https://www.nytimes.com/interactive/2015/05/28/upshot/you-draw-it-how-family-income-affects-childrens-college-chances.html">You draw it</a>
+  visualizations by New York Times. You can click on the chart to adjust the size of the bars.
+  The demo is based on the Elm architecture and the main nice thing is that events are
+  reported in domain units.
+</p>
+
+<pre class="compost"><code class="lang-javascript">let partyColors = {}
+for(var i = 0; i < elections.length; i++)
+  partyColors[elections[i].party] = elections[i].color;
+
+function update(state, evt) {
+  switch (evt.kind) {
+    case 'set':
+      if (!state.enabled) return state;
+      let newValues = state.values.map(kv =>
+        kv[0] == evt.party ? [kv[0], evt.newValue] : kv)
+      return { ...state, values: newValues }
+    case 'enable':
+      return { ...state, enabled: evt.enabled }
+  }
+}
+
+function render(trigger, state) {
+  return c.axes("left bottom", c.scaleY(s.continuous(0, 400),
+      c.on({
+        mousedown: () => trigger({ kind:'enable', enabled:true }),
+        mouseup: () => trigger({ kind:'enable', enabled:false }),
+        mousemove: (x, y) => trigger({ kind:'set', party:x[0], newValue:y })
+      }, c.overlay(state.values.map(kv =>
+        c.fillColor(partyColors[kv[0]],
+          c.padding(0, 10, 0, 10, c.column(kv[0], kv[1]))) ))
+    )))
+}
+
+let init = { enabled:false, values: elections.map(e => [e.party, e.y19]) }
+c.interactive("out4", init, update, render)
+</code></pre>
+<div id="out4" style="margin-left:50px;max-width:600px;height:300px;margin-bottom:30px;"></div>
+
+      <h2>Learn more about Compost</h2>
+      <ul>
+        <li><a href="usage.html">How to use Compost.js</a> - How to reference
+          Compost from your Node or JavaScript project.</li>
+        <li><a href="api.html">API Reference</a> - Documentation for the 15 primitives
+          that you need to use Compost.</li>
+        <li><a href="https://github.com/compostjs/compost">Compost source code on GitHub</a> -
+          Compost is implemented in just 700 lines of F#.</li>
+        <li><a href="paper.pdf">Read a draft paper about Compost</a> -
+          Longer, but explains Compost in full detail.</li>
+        <li>Get in touch with the author at <a href="https://twitter.com/tomaspetricek">@tomaspetricek</a>
+          or using email <a href="mailto:tomas@tomasp.net">tomas@tomasp.net</a>.</li>
+      </ul>
+
+    </div>
+  </section>
+  <script src="releases/compost-latest.js"></script>
+  <script src="lib/docs.js?xx"></script>
+</body>
+</html>
