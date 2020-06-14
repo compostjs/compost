@@ -20,14 +20,13 @@ code.hljs {
   background:transparent;
 }
 pre, code {
-  font-family:'Roboto Mono', monospace; 
+  font-family:'Roboto Mono', monospace;
   font-size:10pt;
 }
 pre {
   margin-left:20px;
   margin-right:20px;
   margin-bottom:20px;
-  white-space:pre-wrap;
   margin-top:0px;
 }
 pre.compost {
@@ -61,7 +60,7 @@ body {
   margin:0px auto 0px auto;
 }
 section {
-  padding-top:50px;
+  padding:50px 30px 0px 30px;
 }
 nav {
   background:white;
@@ -80,7 +79,7 @@ a:hover {
   text-decoration:none;
 }
 nav a {
-  margin-right:30px;
+  margin:0px 15px 0px 15px;
 }
 nav, nav a, nav a:visited {
   font-family:Kreon;
@@ -95,7 +94,7 @@ nav a:hover {
   max-width:800px;
   padding-right:50px;
   text-align:center;
-  padding-bottom:10px;
+  padding-bottom:0px;
 }
 .buttons a, .buttons a:visited {
   background:#ff8050;
@@ -103,7 +102,7 @@ nav a:hover {
   padding:10px 30px 10px 30px;
   text-align:center;
   display:inline-block;
-  margin:0px 15px 0px 15px;
+  margin:0px 15px 15px 15px;
   border-radius:10px;
   font-family:Kreon;
   font-size:14pt;
@@ -125,4 +124,30 @@ table.docs p {
 }
 table.docs code.f {
   color:#e06030;
+}
+.compost-out {
+  margin:0px 0px 30px 50px;
+}
+@media only screen and (max-width: 600px) {
+  .compost-out {
+    margin:0px 0px 30px 0px;
+  }
+  pre {
+    margin-left:0px;
+    margin-right:0px;
+  }
+  pre.compost {
+    margin-left:0px;
+    margin-right:0px;
+  }
+  table.docs tr > *{
+      display: block;
+  }
+  
+}
+
+@media only screen and (max-width: 420px) {
+  nav a {
+    margin:0px 10px 0px 10px;
+  }
 }

@@ -29,9 +29,9 @@
         longer, because we cannot reuse helper functions between files. All sample data
         is defined in the <a href="https://github.com/compostjs/compost/blob/master/docs/lib/docs.js">docs.js file on GitHub</a>.
       <ul class="nosep">
-        <li><a href="#uk-bar">Uk elections: Basic bar chart</a></li>
-        <li><a href="#uk-double">Uk elections: Double bar chart</a></li>
-        <li><a href="#uk-title">Uk elections: Double bar chart with a title</a></li>
+        <li><a href="#uk-bar">UK elections: Basic bar chart</a></li>
+        <li><a href="#uk-double">UK elections: Double bar chart</a></li>
+        <li><a href="#uk-title">UK elections: Double bar chart with a title</a></li>
         <li><a href="#xchg-line">Exchange rates: Line chart with explicit scale</a></li>
         <li><a href="#xchg-back">Exchange rates: Line chart with highlighted background</a></li>
         <li><a href="#xchg-shared">Exchange rates: Two line charts with shared axis</a></li>
@@ -54,7 +54,7 @@
 
 c.render("out1a", bars)
 </code></pre>
-      <div id="out1a" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+      <div id="out1a" class="compost-out" style="max-width:600px;height:250px"></div>
 
       <h2>UK elections: Double bar chart<a name="uk-double"></a></h2>
       <p>The following chart shows two bars for each political party. The x coordinates
@@ -90,7 +90,7 @@ let bars =
 
 c.render("out1b", bars)
 </code></pre>
-      <div id="out1b" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+      <div id="out1b" class="compost-out" style="max-width:600px;height:250px"></div>
 
       <h2>UK elections: Double bar chart with a title<a name="uk-title"></a></h2>
       <p>The following chart shows two bars for each political party. The x coordinates
@@ -139,7 +139,7 @@ let bars =
 
 c.render("out1c", title("United Kingdom general elections (2017 vs 2019)", bars))
 </code></pre>
-      <div id="out1c" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+      <div id="out1c" class="compost-out" style="max-width:600px;height:250px"></div>
 
 <h2>Exchange rates: Line chart with explicit scale<a name="xchg-line"></a></h2>
 <p>This demo creates a basic line chart showing GBP/USD exchange rate around 23 June 2016.
@@ -153,7 +153,7 @@ c.render("out1c", title("United Kingdom general elections (2017 vs 2019)", bars)
   ))
 c.render("out2a", rates)
 </code></pre>
-<div id="out2a" style="margin-left:50px;max-width:600px;height:200px;margin-bottom:30px;"></div>
+<div id="out2a" class="compost-out" style="max-width:600px;height:200px"></div>
 
 <h2>Exchange rates: Line chart with highlighted background<a name="xchg-back"></a></h2>
 <p>This is the demo from the <a href="index.html">Compost home page</a>. We create a line
@@ -171,7 +171,7 @@ let rates = c.axes("left right bottom", c.overlay([
   ]))
 c.render("out2b", rates)
 </code></pre>
-<div id="out2b" style="margin-left:50px;max-width:600px;height:200px;margin-bottom:30px;"></div>
+<div id="out2b" class="compost-out" style="max-width:600px;height:200px"></div>
 
 <h2>Exchange rates: Two line charts with shared axis<a name="xchg-shared"></a></h2>
 <p>In this demo, we compare two different exchange rates. To do this, we create two
@@ -197,7 +197,7 @@ let rates = c.overlay([
 
 c.render("out2c", rates)
 </code></pre>
-<div id="out2c" style="margin-left:50px;max-width:600px;height:250px;margin-bottom:30px;"></div>
+<div id="out2c" class="compost-out" style="max-width:600px;height:250px;"></div>
 
 <h2>Iris dataset: Creating basic scatterplot<a name="iris-scatter"></a></h2>
 <p>This example shows how to create a scatterplot comparing two features of the
@@ -215,7 +215,7 @@ let scatter =
   ))
 c.render("out3a", scatter)
 </code></pre>
-<div id="out3a" style="margin-left:50px;max-width:300px;height:200px;margin-bottom:30px;"></div>
+<div id="out3a" class="compost-out" style="max-width:300px;height:200px"></div>
 
 <h2>Iris dataset: Creating basic histogram<a name="iris-hist"></a></h2>
 <p>Compost does not have a built-in histogram chart, but we can create this ourselves
@@ -247,7 +247,7 @@ let hist =
     ))
 c.render("out3b", hist)
 </code></pre>
-<div id="out3b" style="margin-left:50px;max-width:500px;height:200px;margin-bottom:30px;"></div>
+<div id="out3b" class="compost-out" style="max-width:500px;height:200px;"></div>
 
 <h2>Iris dataset: Histogram and scatter in a pairplot<a name="iris-pairplot"></a></h2>
 <p>This example combines the previous two into a single chart. It is a reimplementation
@@ -288,7 +288,7 @@ let pairplot =
 
 c.render("out3c", pairplot)
 </code></pre>
-<div id="out3c" style="margin-left:50px;max-width:700px;height:500px;margin-bottom:30px;"></div>
+<div id="out3c" class="compost-out" style="max-width:700px;height:500px"></div>
 
 <h2>You draw it: Interactive bar chart<a name="youdraw-bar"></a></h2>
 <p>This demo shows how to create interactive charts using Compost. It is inspired by the
@@ -329,7 +329,7 @@ function render(trigger, state) {
 let init = { enabled:false, values: elections.map(e => [e.party, e.y19]) }
 c.interactive("out4", init, update, render)
 </code></pre>
-<div id="out4" style="margin-left:50px;max-width:600px;height:300px;margin-bottom:30px;"></div>
+<div id="out4" class="compost-out" style="max-width:600px;height:300px;"></div>
 
       <h2>Learn more about Compost</h2>
       <ul>
