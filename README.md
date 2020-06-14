@@ -25,8 +25,12 @@ npm start
 ```
 
 ### Building Compost
-`npm run standalone` `npm run build`
+There are two ways to build Compost. Running `npm run build` will use `fable-splitter`
+to generate nice JavaScript files for a NPM package in the `dist` folder, which is then
+packaged and published on NPM. Running `npm run standalone` builds a standalone
+JavaScript file that is added to the `releases` folder of the `docs` with the current
+version number in the filename (and also updates the `latest` file).
 
-
+# What is the story behind the name??
 
 ![Compost](https://github.com/compostjs/compost/raw/master/compost.gif)
