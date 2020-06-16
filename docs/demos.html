@@ -34,6 +34,7 @@
         <li><a href="#uk-title">UK elections: Double bar chart with a title</a></li>
         <li><a href="#xchg-line">Exchange rates: Line chart with explicit scale</a></li>
         <li><a href="#xchg-back">Exchange rates: Line chart with highlighted background</a></li>
+        <li><a href="#xchg-under">Exchange rates: Highlighting area under a line</a></li>
         <li><a href="#xchg-shared">Exchange rates: Two line charts with shared axis</a></li>
         <li><a href="#iris-scatter">Iris dataset: Creating basic scatterplot</a></li>
         <li><a href="#iris-hist">Iris dataset: Creating basic histogram</a></li>
@@ -173,6 +174,28 @@ c.render("out2b", rates)
 </code></pre>
 <div id="out2b" class="compost-out" style="max-width:600px;height:200px"></div>
 
+<h2>Exchange rates: Highlighting area under a line<a name="xchg-under"></a></h2>
+<p>What if we wanted to highlight just the area under a line, rather than the whole
+  background of the chart? The <code>c.shape</code> primitive can fill any polygon,
+  so we are not limited to specifying a rectangle as above. In the following, we generate
+  the background shapes so that the bottom is flat, but the top is aligned with the
+  data points on the line.</p>
+
+<pre class="compost"><code class="lang-javascript">let lo = 1.25, hi = 1.52
+let rates = c.axes("left right bottom", c.overlay([
+    c.fillColor("#1F77B460",  c.shape(
+      gbpusd.slice(0, 17).map((v, i) => [i, v])
+        .concat([[16, lo], [0, lo]]) )),
+    c.fillColor("#D6272860",  c.shape(
+      gbpusd.slice(16).map((v, i) => [i+16, v])
+        .concat([[gbpusd.length-1, lo], [16, lo]]) )),
+    c.strokeColor("#202020",
+      c.line(gbpusd.map((v, i) => [i, v])))
+  ]))
+c.render("out2c", rates)
+</code></pre>
+<div id="out2c" class="compost-out" style="max-width:600px;height:200px"></div>
+
 <h2>Exchange rates: Two line charts with shared axis<a name="xchg-shared"></a></h2>
 <p>In this demo, we compare two different exchange rates. To do this, we create two
   line charts and then place one above the other. The charts will share the X axis, but
@@ -195,9 +218,9 @@ let rates = c.overlay([
   c.nestY(50, 100, body(1.15, 1.32, gbpeur)),
 ])
 
-c.render("out2c", rates)
+c.render("out2d", rates)
 </code></pre>
-<div id="out2c" class="compost-out" style="max-width:600px;height:250px;"></div>
+<div id="out2d" class="compost-out" style="max-width:600px;height:250px;"></div>
 
 <h2>Iris dataset: Creating basic scatterplot<a name="iris-scatter"></a></h2>
 <p>This example shows how to create a scatterplot comparing two features of the
