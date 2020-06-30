@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Getting started with Compost - Compost.js</title>
+  <meta name="author" content="Tomas Petricek">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/styles/default.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/js/all.min.js"
+    integrity="sha256-HkXXtFRaflZ7gjmpjGQBENGnq8NIno4SDNq/3DbkMgo=" crossorigin="anonymous"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script>function toggle() {
+    var n = document.getElementById('navlg');
+    n.className = n.className=="hidden"?"visible":"hidden";
+   }</script>
+  <link rel="stylesheet" href="lib/style.css">
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <div id="navsm">
+        <a href="index.html"><a href="javascript:toggle()"><i class="fa fa-bars"></i></a>
+      </div>
+      <div id="navlg" class="hidden">
+        <a href="index.html">Home</a>
+        <a href="tutorial.html">Tutorial</a>
+        <a href="usage.html">Usage</a>
+        <a href="demos.html">Demos</a>
+        <a href="api.html">API Docs</a>
+        <a href="https://github.com/compostjs/compost">GitHub</a>
+      </div>
+    </div>
+  </nav>
+  <section>
+    <div class="container">
+      <h1>Getting started with Compost</h1>
+      <p>
+        In this tutorial, we're going to progressively create a chart using Compost. We
+        will start with the most basic one and gradually add a number of interesting features.
+        This covers most of the core primitives that Compost.js provides for constructing charts.
+        There are two things to keep in mind when reading the tutorial.
+      </p>
+      <p>
+        First, the primitives are quite basic on their own. This is precisely the
+        point of the library. You have only a small number of basic primitives, but you can
+        easily compose them to build interesting charts.
+      </p>
+      <p>
+        Second, the primitives are just JavaScript functions that you call from your own
+        JavaScript code. Most of the code snippets will look more like declarative specifications
+        than like code, but that's just because we are building only basic charts with hard-coded
+        data. In a real case, you would generate elements for example using the
+        <code>data.map(...)</code> function or using a <code>for</code> loop. Crucially, this
+        also means that you can wrap a part of the logic into a reusable function and define
+        your own high-level operations.
+      </p>
+      <p>
+        The final chart that we'll construct in the tutorial shows
+        <a href="https://yougov.co.uk/topics/politics/explore/public_figure/Boris_Johnson">Boris
+          Johnson's approval rating</a> as of June 2020:
+      </p>
+      <script class="compost" type="text/compost">function errorLine(x, y, sdv) {
+        return c.strokeColor("black", c.overlay([
+          c.line([[[x, 0.5], y-sdv], [[x, 0.5], y+sdv]]),
+          c.line([[[x, 0.45], y-sdv], [[x, 0.55], y-sdv]]),
+          c.line([[[x, 0.45], y+sdv], [[x, 0.55], y+sdv]])
+        ]));
+      }
+
+      let chart =
+        c.axes("left bottom", c.overlay([
+          c.fillColor("#2CA02C", c.column("Positive", 39)),
+          errorLine("Positive", 39, 7),
+          c.fillColor("#D62728", c.column("Negative", 43)),
+          errorLine("Negative", 43, 5),
+          c.fillColor("#1F77B4", c.column("Neutral", 17)),
+          errorLine("Neutral", 17, 2)
+        ]))
+
+      let legend =
+        c.overlay([
+          c.fillColor("#2CA02C", c.padding(7,0,7,0, c.bar(10, "Positive"))),
+          c.fillColor("#D62728", c.padding(7,0,7,0, c.bar(10, "Negative"))),
+          c.fillColor("#1F77B4", c.padding(7,0,7,0, c.bar(10, "Neutral"))),
+          c.font("11pt arial", "black", c.overlay([
+            c.text(12, ["Positive",0.5], "Positive", "start"),
+            c.text(12, ["Negative",0.5], "Negative", "start"),
+            c.text(12, ["Neutral",0.5], "Neutral", "start")
+          ]))
+        ])
+
+      let demo = c.overlay([
+        c.nest(0, 85, 0, 100, chart),
+        c.nest(90, 100, 50, 100, legend)
+      ])
+
+      c.render("out0", demo)
+      </script>
+      <div id="out0" class="compost-out" style="max-width:500px;height:200px;margin-top:40px;"></div>
+
+      <h2>Creating and aligning columns</h2>
+      <p>Just for fun, let's start with a snippet that defines a single column using
+        <code>c.column</code> and then renders it using the <code>c.render</code> function.
+        Our column has a categorical X value <code>"Positive"</code> and a continuous
+        Y value <code>39</code>. The result is not very impressive:</p>
+<pre class="compost"><code class="lang-javascript">let demo = c.column("Positive", 39);
+c.render("out1a", demo)</code></pre>
+      <div id="out1a" class="compost-out" style="max-width:500px;height:150px"></div>
+
+      <p>What has happened here? Compost first infers the scales of the chart, which represent
+        the range of values that may appear on its axes. For the X axis, the scale is categorical
+        containing only one value <code>"Positive"</code>. The scale for the Y axis is continuous
+        and contains values form 0 (the bottom of the column) to 39 (the top of the column).
+        Compost then projects the single column onto the available space and the single column
+        takes the entire available space. It is also drawn using a boring default gray color. </p>
+      <p>For the next step, we're going to combine multiple columns. To do this, we use
+        <code>c.overlay</code>, which takes a list of chart elements (shapes) and automatically
+        aligns them according to the inferred scales:</p>
+<pre class="compost"><code class="lang-javascript">let demo =
+  c.overlay([
+    c.column("Positive", 39),
+    c.column("Negative", 43),
+    c.column("Neutral", 17)
+  ])
+
+c.render("out1b", demo)</code></pre>
+      <div id="out1b" class="compost-out" style="max-width:500px;height:150px"></div>
+
+      <p>This is a bit better! We can see that the X axis has been divided into three
+        equally-sized parts. Compost inferred that the X scale now contains three different
+        (categorical) values. When rendering a column, it then maps the values onto the
+        inferred scale and so each column takes only a part of the space.
+
+      <h2>Adding colors and axes</h2>
+      <p>Compost does not (currently) automatically assign colors to different columns.
+        They are just shapes that are drawn using a specified color. To change the
+        specified color for a part of a chart, we can use <code>c.fillColor</code>, which
+        changes color for a shape given as the second parameter. For lines, there is
+        <code>c.strokeColor</code>.
+      </p>
+<pre class="compost"><code class="lang-javascript">let demo =
+  c.overlay([
+    c.fillColor("#2CA02C", c.column("Positive", 39)),
+    c.fillColor("#D62728", c.column("Negative", 43)),
+    c.fillColor("#1F77B4", c.column("Neutral", 17))
+  ])
+
+c.render("out2a", demo)
+</code></pre>
+      <div id="out2a" class="compost-out" style="max-width:500px;height:150px"></div>
+
+      <p>Now we can see that the chart, indeed, consists of three separate columns!
+        But how can we find out which one is which? To make this clear, we need to add
+        axes. This is done using <code>c.axes</code>, which is a primitive that adds axes
+        around a specified (part) of a chart. The first parameter is a string that can contain
+        any combination of left/right/top/bottom, depending on what axes we want:
+      </p>
+<pre class="compost"><code class="lang-javascript">let demo =
+  c.axes("left bottom", c.overlay([
+    c.fillColor("#2CA02C", c.column("Positive", 39)),
+    c.fillColor("#D62728", c.column("Negative", 43)),
+    c.fillColor("#1F77B4", c.column("Neutral", 17))
+  ]))
+
+c.render("out2b", demo)
+</code></pre>
+      <div id="out2b" class="compost-out" style="max-width:500px;height:200px"></div>
+      <p>An important thing to note is that we did not need to tell <code>c.axes</code> what
+        the ranges on the axes are. This is inferred automatically. As discussed before,
+        Compost infers the scales for both axes (so that it can automatically align shapes)
+        and the <code>c.axes</code> primitive just accesses this information.</p>
+
+      <h2>Specifying coordinates</h2>
+      <p>So far, our only primitive shape was a column created using <code>c.column</code>.
+        This is cheating slightly, because <code>c.column</code> is not actually a primitive;
+        it is just a very convenient helper. Under the cover, it uses the <code>c.shape</code>
+        primitive, which takes a list of locations and fills a polygon specified by those
+        locations.</p>
+      <p> A location consists of an X and Y coordinate and we specify them as
+        two-element JavaScript arrays. If you have coordinates X1, Y1, X2, Y2, X3 and Y3
+        and want to fill a triangle specified by those three points, you would specify a list
+        of locations as:
+      </p>
+      <pre><code class="lang-javascript">[ [x1, y1], [x2, y2], [x3, y3] ]</code></pre>
+      <p>How do we specify a single X or Y coordinate? There are two options, depending on
+        whether the scale that we are using is continuous or categorical. For continous scales,
+        the coordinate is just a numerical value. If the Y axis has a continous scale representing
+        the approval ratings, then Y1 would be just <code>0</code> or <code>39</code>.
+      </p>
+      <p>For categorical scales, specifying a location is trickier. A categorical value such as
+        <code>"Positive"</code> refers to a range rather than a single location, so if we want
+        to specify a location, we need to add a numerical value between 0 and 1 that specifies an
+        offset within the range. For example, <code>["Positive", 0]</code> is on the very left of
+        the range and <code>["Positive", 1]</code> is on the very right.</p>
+      <p>To use <code>c.shape</code> to recreate the same column chart as in the previous example,
+        we need to give it four locations (representing the four corners of the rectangle), each
+        with a categorical X value and a continuous Y value:</p>
+
+<pre class="compost"><code class="lang-javascript">let demo =
+  c.axes("left bottom", c.overlay([
+    c.fillColor("#2CA02C", c.shape([
+      [["Positive", 0], 0], [["Positive", 1], 0],
+      [["Positive", 1], 39], [["Positive", 0], 39] ])),
+    c.fillColor("#D62728", c.shape([
+      [["Negative", 0], 0], [["Negative", 1], 0],
+      [["Negative", 1], 43], [["Negative", 0], 43] ]))
+  ]))
+
+c.render("out3a", demo)
+</code></pre>
+      <div id="out3a" class="compost-out" style="max-width:500px;height:200px"></div>
+
+      <p>One nice consequence of how Compost works is that there is no need to distinguish between
+        a column chart and a bar chart. Compost actually provides <code>c.column</code> and
+        <code>c.bar</code> for convenience, but if we want to turn the previous column chart
+        into a bar chart, we just switch the X and Y coordinates in the two lists:
+      </p>
+<pre class="compost"><code class="lang-javascript">let demo =
+  c.axes("left bottom", c.overlay([
+    c.fillColor("#2CA02C", c.shape([
+      [0, ["Positive", 0]], [0, ["Positive", 1]],
+      [39, ["Positive", 1]], [39, ["Positive", 0]] ])),
+    c.fillColor("#D62728", c.shape([
+      [0, ["Negative", 0]], [0, ["Negative", 1]],
+      [43, ["Negative", 1]], [43, ["Negative", 0]] ]))
+  ]))
+
+c.render("out3b", demo)
+</code></pre>
+      <div id="out3b" class="compost-out" style="max-width:500px;height:200px"></div>
+      <p>This produces a bar chart as we wanted. It is also worth noting that the axes
+        "just work", because they display values according to the inferred scales. Those
+        are inferred from the X or Y values that appear in the individual shapes.</p>
+
+      <h2>Combining different shapes</h2>
+      <p>Aside from filled polygons, Compost also provides primitives for drawing lines
+        and adding text. Lines are obviously useful if you want to create a line chart,
+        but there is nothing preventing you from combining multiple different shapes in
+        a single chart. </p>
+      <p>You might not be used to think about charts in this way, but there is a number
+        of nice use cases. For example, what if we wanted to add an error bar to our bar
+        chart? This is just a line in the middle of the bar. </p>
+      <p>A line is specified in the same way as a shape, i.e. as a list of locations that
+        consist of X and Y coordinates. Let's say that we want to display a bar chart with
+        values 39+/-7 and 43+/-5 (those are made up numbers, not actual standard deviation
+        of the approval ratings):</p>
+<pre class="compost"><code class="lang-javascript">let demo =
+  c.axes("left bottom", c.overlay([
+    c.fillColor("#2CA02C", c.shape([
+      [["Positive", 0], 0], [["Positive", 1], 0],
+      [["Positive", 1], 39], [["Positive", 0], 39] ])),
+    c.strokeColor("black", c.line([
+      [["Positive", 0.5], 32], [["Positive", 0.5], 46] ])),
+    c.fillColor("#D62728", c.shape([
+      [["Negative", 0], 0], [["Negative", 1], 0],
+      [["Negative", 1], 43], [["Negative", 0], 43] ])),
+    c.strokeColor("black", c.line([
+      [["Negative", 0.5], 38], [["Negative", 0.5], 48] ])),
+  ]))
+
+c.render("out4a", demo)
+</code></pre>
+      <div id="out4a" class="compost-out" style="max-width:500px;height:200px"></div>
+      <p>This works fine, but it is not exactly great. The lines would look nicer if
+        they also had smaller horizontal lines at the bottom and at the top. The code is also
+        becoming quite long and would get much longer with more than two columns.</p>
+      <p>Wouldn't it be nicer if you just had a built-in primitive for error bars?
+        The nice thing about Compost is that this is pretty much exactly what we can do
+        on our own! Just like there is <code>c.column</code> helper, we can define our own
+        helper <code>errorLine</code> for creating error bars. This is just a JavaScript
+        function that takes the X and Y values together with a standard deviation for the bar:</p>
+<pre class="compost"><code class="lang-javascript">function errorLine(x, y, sdv) {
+  return c.strokeColor("black", c.overlay([
+    c.line([[[x, 0.5], y-sdv], [[x, 0.5], y+sdv]]),
+    c.line([[[x, 0.45], y-sdv], [[x, 0.55], y-sdv]]),
+    c.line([[[x, 0.45], y+sdv], [[x, 0.55], y+sdv]])
+  ]));
+}
+
+let demo =
+  c.axes("left bottom", c.overlay([
+    c.fillColor("#2CA02C", c.column("Positive", 39)),
+    errorLine("Positive", 39, 7),
+    c.fillColor("#D62728", c.column("Negative", 43)),
+    errorLine("Negative", 43, 5),
+    c.fillColor("#1F77B4", c.column("Neutral", 17)),
+    errorLine("Neutral", 17, 2)
+  ]))
+
+c.render("out4b", demo)
+</code></pre>
+      <div id="out4b" class="compost-out" style="max-width:500px;height:200px"></div>
+      <p>Once we define the <code>errorLine</code> function, the rest of the code to create the
+        chart is very succinct and clear. Of course, we had to define the helper function, but
+        this is something that you only need to do once.</p>
+
+      <h2>Overriding inferred scales</h2>
+      <p>In all the previous examples, the scales were inferred automatically. In some cases,
+        it is useful to be able to override the inferred scale and specify your own. For example,
+        let's say that we want the range displayed on the Y axis to be from 0 to 100. We can
+        do this using the <code>c.scaleY</code> operation. The first argument of this operation
+        is a scale, which can be created using the <code>s.continuous</code> function:</p>
+<pre class="compost"><code class="lang-javascript">let demo =
+  c.axes("left bottom", c.scaleY(s.continuous(0, 100), c.overlay([
+    c.fillColor("#2CA02C", c.column("Positive", 39)),
+    c.fillColor("#D62728", c.column("Negative", 43)),
+    c.fillColor("#1F77B4", c.column("Neutral", 17))
+  ])))
+
+c.render("out5", demo)
+</code></pre>
+      <div id="out5" class="compost-out" style="max-width:500px;height:200px"></div>
+      <p>Here, we create a continuous scale using <code>s.continuous</code>, which takes the
+        smallest and the largest values as arguments. You can also explicitly create categorical
+        scales using <code>s.categorical</code>. In this case, you need to provide an array of
+        strings representing the individual categories. This may be useful if you want to add
+        a category for which you don't have data, or if you want to explicitly specify their order.</p>
+
+      <h2>Combining different charts and more</h2>
+      <p>So far, we've seen how to combine multiple shapes using <code>c.overlay</code>. This
+        is, in fact, the only way to combine multiple shapes. However, there is much more we can
+        do using this primitive if we combine it with a "nesting" operation that lets us
+        create a new virtual space with its own scales within a larger chart.</p>
+
+      <p>To demonstrate nesting, we're going to add a legend to the right side of our bar
+        chart. There is no built-in primitive for legends in Compost, but we can create one
+        just by overlaying three bars (shapes) of the same size and three labels created using
+        <code>c.text</code>:</p>
+<pre class="compost"><code class="lang-javascript">let demo =
+  c.overlay([
+    c.fillColor("#2CA02C", c.padding(10,0,10,0, c.bar(10, "Positive"))),
+    c.fillColor("#D62728", c.padding(10,0,10,0, c.bar(10, "Negative"))),
+    c.fillColor("#1F77B4", c.padding(10,0,10,0, c.bar(10, "Neutral"))),
+    c.font("11pt arial", "black", c.overlay([
+      c.text(12, ["Positive",0.5], "Positive", "start"),
+      c.text(12, ["Negative",0.5], "Negative", "start"),
+      c.text(12, ["Neutral",0.5], "Neutral", "start")
+    ]))
+  ])
+
+c.render("out6a", demo)
+</code></pre>
+      <div id="out6a" class="compost-out" style="max-width:500px;height:200px"></div>
+      <p>There are three new primitives in this snippet. First, we use <code>c.padding</code>
+        to add a space around the bar. This takes a padding that should be added from the
+        top, right, bottom and the left side (the order is the same as in CSS). Second,
+        we use <code>c.text</code> to add a label. This takes the X and Y coordinates,
+        followed by the label and a location with respect to the x, Y location. You can use
+        baseline, hanging or middle for vertical alignment and start, end or center for
+        horizontal alignment. Finally, we also specify font and text color using <code>c.font</code>.
+
+      <p>If you imagine the above chart as being much smaller, then it looks like a chart
+        legend. There is one last thing that we need to do, which is to put everything we've
+        done together. The following snippet (re)defines the <code>errorLine</code> helper,
+        defines a <code>legend</code> shape from the previous code sample and creates a chart
+        <code>chart</code>. It then combines <code>legend</code> with <code>chart</code> into
+        a single chart that is rendered. We discuss how this is done below:</p>
+<pre class="compost"><code class="lang-javascript">function errorLine(x, y, sdv) {
+  return c.strokeColor("black", c.overlay([
+    c.line([[[x, 0.5], y-sdv], [[x, 0.5], y+sdv]]),
+    c.line([[[x, 0.45], y-sdv], [[x, 0.55], y-sdv]]),
+    c.line([[[x, 0.45], y+sdv], [[x, 0.55], y+sdv]])
+  ]));
+}
+
+let legend =
+  c.overlay([
+    c.fillColor("#2CA02C", c.padding(7,0,7,0, c.bar(10, "Positive"))),
+    c.fillColor("#D62728", c.padding(7,0,7,0, c.bar(10, "Negative"))),
+    c.fillColor("#1F77B4", c.padding(7,0,7,0, c.bar(10, "Neutral"))),
+    c.font("11pt arial", "black", c.overlay([
+      c.text(12, ["Positive",0.5], "Positive", "start"),
+      c.text(12, ["Negative",0.5], "Negative", "start"),
+      c.text(12, ["Neutral",0.5], "Neutral", "start")
+    ]))
+  ])
+
+let chart =
+  c.axes("left bottom", c.scaleY(s.continuous(0, 55), c.overlay([
+    c.fillColor("#2CA02C", c.column("Positive", 39)),
+    errorLine("Positive", 39, 7),
+    c.fillColor("#D62728", c.column("Negative", 43)),
+    errorLine("Negative", 43, 5),
+    c.fillColor("#1F77B4", c.column("Neutral", 17)),
+    errorLine("Neutral", 17, 2)
+  ])))
+
+let demo = c.overlay([
+  c.nest(0, 85, 0, 100, chart),
+  c.nest(90, 100, 50, 100, legend)
+])
+c.render("out6b", demo)
+</code></pre>
+      <div id="out6b" class="compost-out" style="max-width:500px;height:200px"></div>
+      <p>In order to put the legend on the right side of the chart, we use the
+        <code>c.nest</code> operation and then overlay the results. The nest operation
+        takes two locations (X1, X2, Y1, Y2) and draws the shape it gets as the last argument
+        inside a rectangle specified by those two points. The scales inside the shape can be
+        completely different from the scales on the outside.</p>
+      <p>In our example, both shapes that we
+        combine are constructed using <code>c.nest</code> and the scale on the outside is
+        thus defined only by the locations given to <code>c.nest</code>.
+        The X and Y values for the rectangle containing the main chart are 0 to 85 (for X)
+        and 0 to 100 (for Y). For the legend, those are 90 to 100 (for X) and 0 to 50 (for Y).
+        This means that we're dedicating 85% of the horizontal space for the main chart,
+        followed by 5% gap and 10% for the legend. Vertically, the legend only occupies the top
+        half of the space. Note that our choice of numbers from 0 to 100 is arbitrary. This is
+        just an (automatically inferred) continuous scale, so the code would work equally well
+        with values between 0 and 1.</p>
+
+      <h2>Conclusions</h2>
+      <p>To summarize, the tutorial shows the two key features of Compost:</p>
+      <ul>
+        <li><strong>Small number of primitives.</strong>
+          There is only a small number of primitives, but they can be composed to create
+          rich charts. In our example, we composed filled shapes to create columns (and bars)
+          with lines to add error bars to our chart.</li>
+        <li><strong>Domain-specific coordinates.</strong>
+          The composition is made easy thanks to the fact that we specify all coordinates in
+          terms of domain values. Those can be continuous (just a number) or categorical
+          (a category name with a number indicating a location within a range allocated for
+          the category).</li>
+        <li><strong>High-level abstractions.</strong>
+          You can use standard JavaScript functions to define high-level chart abstractions.
+          In our example, we defined a function <code>errorLine</code> to draw an error bar
+          for a bar chart. Similarly, we could define one to add a legend or a title
+          or to create a particular chart such as pairplot. </li>
+      </ul>
+
+      <h2>Learn more about Compost</h2>
+      <ul>
+        <li><a href="usage.html">How to use Compost.js</a> - How to reference
+          Compost from your Node or JavaScript project.</li>
+        <li><a href="demos.html">Further demos</a> - Explore larger samples showing
+          Compost in action.</li>
+        <li><a href="api.html">API Reference</a> - Documentation for the 15 primitives
+          that you need to use Compost.</li>
+        <li><a href="https://github.com/compostjs/compost">Compost source code on GitHub</a> -
+          Compost is implemented in just 700 lines of F#.</li>
+        <li><a href="paper.pdf">Read a draft paper about Compost</a> -
+          Longer, but explains Compost in full detail.</li>
+        <li>Get in touch with the author at <a href="https://twitter.com/tomaspetricek">@tomaspetricek</a>
+          or using email <a href="mailto:tomas@tomasp.net">tomas@tomasp.net</a>.</li>
+      </ul>
+
+    </div>
+  </section>
+  <script src="releases/compost-latest.js"></script>
+  <script src="lib/docs.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-1561220-8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'UA-1561220-8');
+  </script>
+</body>
+</html>

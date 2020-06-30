@@ -14,17 +14,29 @@
   <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/styles/default.min.css">
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/js/all.min.js"
+    integrity="sha256-HkXXtFRaflZ7gjmpjGQBENGnq8NIno4SDNq/3DbkMgo=" crossorigin="anonymous"></script>
   <script>hljs.initHighlightingOnLoad();</script>
+  <script>function toggle() {
+    var n = document.getElementById('navlg');
+    n.className = n.className=="hidden"?"visible":"hidden";
+   }</script>
   <link rel="stylesheet" href="lib/style.css">
 </head>
 <body>
   <nav>
     <div class="container">
-      <a href="index.html">Home</a>
-      <a href="usage.html">Usage</a>
-      <a href="demos.html">Demos</a>
-      <a href="api.html">API Docs</a>
-      <a href="https://github.com/compostjs/compost">GitHub</a>
+      <div id="navsm">
+        <a href="index.html"><a href="javascript:toggle()"><i class="fa fa-bars"></i></a>
+      </div>
+      <div id="navlg" class="hidden">
+        <a href="index.html">Home</a>
+        <a href="tutorial.html">Tutorial</a>
+        <a href="usage.html">Usage</a>
+        <a href="demos.html">Demos</a>
+        <a href="api.html">API Docs</a>
+        <a href="https://github.com/compostjs/compost">GitHub</a>
+      </div>
     </div>
   </nav>
   <section>
@@ -39,7 +51,9 @@
       </p>
 
       <div class="buttons">
-        <a href="usage.html">Use Compost now!</a> <a href="demos.html">See more demos!</a>
+        <a href="usage.html">Read the tutorial!</a>
+        <a href="demos.html">See more demos..</a>
+        <a href="usage.html">Use Compost now!</a>
       </div>
 
       <h2>Compost in 10 lines of code</h2>
@@ -88,6 +102,8 @@ c.render("demo", xchg)
 
         <h2>Learn more about Compost</h2>
         <ul>
+          <li><a href="tutorial.html">Compost.js tutorial</a> - A step-by-step
+            guide introducing the key Compost.js concepts.</li>
           <li><a href="usage.html">How to use Compost.js</a> - How to reference
             Compost from your Node or JavaScript project.</li>
           <li><a href="demos.html">Further demos</a> - Explore larger samples showing

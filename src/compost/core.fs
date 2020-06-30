@@ -405,17 +405,39 @@ module Scales =
 // ------------------------------------------------------------------------------------------------
 
 module Projections = 
-  let projectOne (tlv:float<_>, thv:float<_>) scale coord = 
+  let projectOne reversed (tlv:float<_>, thv:float<_>) scale coord = 
     match scale, coord with
     | Categorical(vals), (CAR(CA v,f)) ->
         let size = (thv - tlv) / float vals.Length
         let i = vals |> Array.findIndex (fun (CA vv) -> v = vv)
         let i = float i + f
-        tlv + (i * size)
+        if reversed then thv - (i * size) else tlv + (i * size)
     | Continuous(CO slv, CO shv), (COV (CO v)) ->
-        (v - slv) / (shv - slv) * (thv - tlv) + tlv
+        if reversed then thv - (v - slv) / (shv - slv) * (thv - tlv)
+        else tlv + (v - slv) / (shv - slv) * (thv - tlv)
     | Categorical _, COV _ -> failwithf "Cannot project continuous value (%A) on a categorical scale (%A)." coord scale
     | Continuous _, CAR _ -> failwithf "Cannot project categorical value (%A) on a continuous scale (%A)." coord scale
+
+  let projectOneX a = projectOne false a
+  let projectOneY a = projectOne true a
+
+  let projectInvOne reversed (l:float, h:float) s (v:float) = 
+    match s with 
+    | Continuous(CO slv, CO shv) ->
+        if reversed then COV(CO (shv - (v - l) / (h - l) * (shv - slv)))
+        else COV(CO (slv + (v - l) / (h - l) * (shv - slv)))
+
+    | Categorical(cats) ->
+        let size = (h - l) / float cats.Length
+        let i = if reversed then floor ((h - v) / size) else floor ((v - l) / size)
+        let f = if reversed then ((h - v) / size) - i else ((v - l) / size) - i
+        let i = if size < 0. then (float cats.Length) + i else i // Negative when thv < tlv
+        if int i < 0 || int i >= cats.Length then CAR(CA "<outside-of-range>", f)
+        else CAR(cats.[int i], f)
+
+  let projectInv (x1, y1, x2, y2) (sx, sy) (x, y) =
+    projectInvOne false (x1, x2) sx x, 
+    projectInvOne true (y1, y2) sy y
 
 // ------------------------------------------------------------------------------------------------
 // Drawing
@@ -439,18 +461,18 @@ module Drawing =
   let rec drawShape ctx ((x1, y1, x2, y2) as area) ((sx, sy) as scales) (shape:ScaledShape<'ux, 'uy>) =     
 
     let project (vx, vy) =
-      projectOne (x1, x2) sx vx, projectOne (y1, y2) sy vy
+      projectOneX (x1, x2) sx vx, projectOneY (y1, y2) sy vy
 
     match shape with
     | ScaledNestX(p1, p2, isx, shape) -> 
-        let x1' = projectOne (x1, x2) sx p1
-        let x2' = projectOne (x1, x2) sx p2        
+        let x1' = projectOneX (x1, x2) sx p1
+        let x2' = projectOneX (x1, x2) sx p2        
         //let x1', x2' = if x2 < x1 then max x1' x2', min x1' x2' else min x1' x2', max x1' x2'
         drawShape ctx (x1', y1, x2', y2) (isx, sy) shape
 
     | ScaledNestY(p1, p2, isy, shape) -> 
-        let y1' = projectOne (y1, y2) sy p1
-        let y2' = projectOne (y1, y2) sy p2
+        let y1' = projectOneY (y1, y2) sy p1
+        let y2' = projectOneY (y1, y2) sy p2
         //let y1', y2' = if y2 < y1 then  min y1' y2', max y1' y2' else max y1' y2', min y1' y2' 
         drawShape ctx (x1, y1', x2, y2') (sx, isy) shape
 
@@ -471,22 +493,24 @@ module Drawing =
         Path(path, formatStyle ctx.Definitions (hideStroke ctx.Style)) 
 
     | ScaledPadding((t, r, b, l), isx, isy, shape) ->
-        let calculateNestedRange (v1, v2) ins outs =
+        let calculateNestedRange rev (v1, v2) ins outs =
           match ins with 
           | Continuous(CO l, CO h) -> 
-              projectOne (v1, v2) outs (COV (CO l)), 
-              projectOne (v1, v2) outs (COV (CO h))
-          | Categorical(vals) ->
-              vals |> Seq.map (fun v -> projectOne (v1, v2) outs (CAR(v, 0.0))) |> Seq.min,
-              vals |> Seq.map (fun v -> projectOne (v1, v2) outs (CAR(v, 1.0))) |> Seq.max
+              let pos = 
+                [ projectOne rev (v1, v2) outs (COV (CO l))
+                  projectOne rev (v1, v2) outs (COV (CO h)) ]
+              Seq.min pos, Seq.max pos
+          | Categorical(vals) ->              
+              let pos = vals |> Seq.collect (fun v -> 
+                [ projectOne rev (v1, v2) outs (CAR(v, 0.0))
+                  projectOne rev (v1, v2) outs (CAR(v, 1.0)) ])
+              Seq.min pos, Seq.max pos
           //|> fun rs -> printfn "calculateNestedRange %A %A %A = %A" (v1, v2) ins outs rs; rs
           
-        let x1', x2' = calculateNestedRange (x1, x2) isx sx
-        let y1', y2' = calculateNestedRange (y1, y2) isy sy
-        let l, r = if x1' < x2' then l, r else -r, -l
-        let t, b = if y1' < y2' then t, b else -b, -t
+        let x1', x2' = calculateNestedRange false (x1, x2) isx sx
+        let y1', y2' = calculateNestedRange true (y1, y2) isy sy
         //printfn "PADDING: %A\nAXES: %A\nAREA: %A\nNEW AREA: %A\nAFTER PAD: %A\n\n" (t, r, b, l) (isx, isy)  area (x1', y1', x2', y2') (x1' + l, y1' + t, x2' - r, y2' - b)
-        drawShape ctx (x1' + l, y1' + t, x2' - r, y2' - b) (isx, isy) shape
+        drawShape ctx (x1'+l, y1'+t, x2'-r, y2'-b) (isx, isy) shape
 
     | ScaledLine line -> 
         let path = 
@@ -525,22 +549,6 @@ module Events =
     | TouchEnd
     | MouseLeave
 
-  let projectInvOne (l:float, h:float) s (v:float) = 
-    match s with 
-    | Continuous(CO slv, CO shv) ->
-        COV(CO (slv + (v - l) / (h - l) * (shv - slv)))
-
-    | Categorical(cats) ->
-        let size = (h - l) / float cats.Length
-        let i = floor ((v - l) / size)
-        let f = ((v - l) / size) - i
-        let i = if size < 0. then (float cats.Length) + i else i // Negative when thv < tlv
-        if int i < 0 || int i >= cats.Length then CAR(CA "<outside-of-range>", f)
-        else CAR(cats.[int i], f)
-
-  let projectInv (x1, y1, x2, y2) (sx, sy) (x, y) =
-    projectInvOne (x1, x2) sx x, projectInvOne (y1, y2) sy y
-
   let projectEvent area scales event =
     match event with
     | MouseEvent(kind, (COV (CO x), COV (CO y))) -> MouseEvent(kind, projectInv area scales (x, y))
@@ -576,30 +584,34 @@ module Events =
     | ScaledOffset((dx, dy), shape) ->
         triggerEvent (x1 + dx, y1 + dy, x2 + dx, y2 + dy) scales shape jse event
     | ScaledNestX(p1, p2, isx, shape) -> 
-        let x1' = projectOne (x1, x2) sx p1
-        let x2' = projectOne (x1, x2) sx p2        
+        let x1' = projectOneX (x1, x2) sx p1
+        let x2' = projectOneX (x1, x2) sx p2        
         //let x1', x2' = if x2 < x1 then max x1' x2', min x1' x2' else min x1' x2', max x1' x2'
         triggerEvent (x1', y1, x2', y2) (isx, sy) shape jse event
 
     | ScaledNestY(p1, p2, isy, shape) -> 
-        let y1' = projectOne (y1, y2) sy p1
-        let y2' = projectOne (y1, y2) sy p2
+        let y1' = projectOneY (y1, y2) sy p1
+        let y2' = projectOneY (y1, y2) sy p2
         //let y1', y2' = if y2 < y1 then  min y1' y2', max y1' y2' else max y1' y2', min y1' y2' 
         triggerEvent (x1, y1', x2, y2') (sx, isy) shape jse event
     | ScaledPadding((t, r, b, l), isx, isy, shape) ->
-        let calculateNestedRange (v1, v2) ins outs =
+        let calculateNestedRange rev (v1, v2) ins outs =
           match ins with 
           | Continuous(CO l, CO h) -> 
-              projectOne (v1, v2) outs (COV (CO l)), 
-              projectOne (v1, v2) outs (COV (CO h))
-          | Categorical(vals) ->
-              vals |> Seq.map (fun v -> projectOne (v1, v2) outs (CAR(v, 0.0))) |> Seq.min,
-              vals |> Seq.map (fun v -> projectOne (v1, v2) outs (CAR(v, 1.0))) |> Seq.max
+              let pos = 
+                [ projectOne rev (v1, v2) outs (COV (CO l))
+                  projectOne rev (v1, v2) outs (COV (CO h)) ]
+              Seq.min pos, Seq.max pos
+          | Categorical(vals) ->              
+              let pos = vals |> Seq.collect (fun v -> 
+                [ projectOne rev (v1, v2) outs (CAR(v, 0.0))
+                  projectOne rev (v1, v2) outs (CAR(v, 1.0)) ])
+              Seq.min pos, Seq.max pos
+          //|> fun rs -> printfn "calculateNestedRange %A %A %A = %A" (v1, v2) ins outs rs; rs
           
-        let x1', x2' = calculateNestedRange (x1, x2) isx sx
-        let y1', y2' = calculateNestedRange (y1, y2) isy sy
-        let l, r = if x1' < x2' then l, r else -r, -l
-        let t, b = if y1' < y2' then t, b else -b, -t
+        let x1', x2' = calculateNestedRange false (x1, x2) isx sx
+        let y1', y2' = calculateNestedRange true (y1, y2) isy sy
+        //printfn "PADDING: %A\nAXES: %A\nAREA: %A\nNEW AREA: %A\nAFTER PAD: %A\n\n" (t, r, b, l) (isx, isy)  area (x1', y1', x2', y2') (x1' + l, y1' + t, x2' - r, y2' - b)
         triggerEvent (x1' + l, y1' + t, x2' - r, y2' - b) (isx, isy) shape jse event
 
     | ScaledLayered shapes -> for shape in shapes do triggerEvent area scales shape jse event
@@ -744,7 +756,7 @@ module Compost =
     let (sx, sy), shape = calculateScales defstyle viz
 
     let defs = ResizeArray<_>()
-    let area = (0.0, height, width, 0.0)
+    let area = (0.0, 0.0, width, height)
     let svg = drawShape { Definitions = defs; Style = defstyle } area (sx, sy) shape
 
     let triggerEvent (e:Event) = triggerEvent area (sx, sy) shape e

@@ -32,7 +32,7 @@ pre {
 pre.compost {
   margin-left:50px;
   margin-right:50px;
-  margin-bottom:30px;
+  margin-bottom:10px;
 }
 p {
   font-size:13pt;
@@ -79,7 +79,7 @@ a:hover {
   text-decoration:none;
 }
 nav a {
-  margin:0px 15px 0px 15px;
+  margin:0px 0px 0px 20px;
 }
 nav, nav a, nav a:visited {
   font-family:Kreon;
@@ -90,6 +90,33 @@ nav, nav a, nav a:visited {
 nav a:hover {
   color:#ff8050;
 }
+#navsm {
+  display:none;
+}
+@media only screen and (max-width: 500px) {
+  #navsm a {
+    font-size:12pt;
+  }
+  #navsm {
+    margin-bottom:-5px;
+  }
+  #navlg {
+    margin-top:15px;
+    margin-bottom:-10px;
+    border-top:solid 1px #e0e0e0;
+  }
+  #navsm {
+    display:block;
+  }
+  #navlg.hidden {
+    display:none;
+  }
+  #navlg a {
+    display:block;
+    margin:10px 0px 10px 25px;
+  }
+}
+
 .buttons {
   max-width:800px;
   padding-right:50px;
@@ -99,10 +126,10 @@ nav a:hover {
 .buttons a, .buttons a:visited {
   background:#ff8050;
   color:white;
-  padding:10px 30px 10px 30px;
+  padding:10px 20px 10px 20px;
   text-align:center;
   display:inline-block;
-  margin:0px 15px 15px 15px;
+  margin:0px 10px 15px 10px;
   border-radius:10px;
   font-family:Kreon;
   font-size:14pt;
@@ -143,7 +170,7 @@ table.docs code.f {
   table.docs tr > *{
       display: block;
   }
-  
+
 }
 
 @media only screen and (max-width: 420px) {
