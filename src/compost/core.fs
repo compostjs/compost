@@ -252,11 +252,11 @@ module Scales =
         generateSteps 6. 1. (float l, float h) |> Array.map (fun f -> COV(CO (unbox f)))
     | Categorical vs -> [| for CA s in vs -> CAR(CA s, 0.5) |]
 
-  let generateAxisLabels fmt (s:Scale<'v>) : (Value<'v> * string)[] =
+  let generateAxisLabels n fmt (s:Scale<'v>) : (Value<'v> * string)[] =
     let sunit = unbox<Scale<1>> s
     match s with 
     | Continuous(CO l, CO h) ->
-        generateSteps 6. 2. (float l, float h) 
+        generateSteps n 2. (float l, float h) 
         |> Array.map (fun f -> COV(CO (unbox f)), fmt sunit (COV(CO(unbox<float<1>> f))))
     | Categorical vs -> [| for v & CA s in vs -> CAR(CA s, 0.5), fmt sunit (CAR(CA s, 0.5)) |]
 
@@ -366,19 +366,19 @@ module Scales =
               yield Line [lx,y; hx,y] |> LineStyle "#e4e4e4" 1.0 1 
             if showTop then
               yield Line [lx,hy; hx,hy] |> LineStyle "black" 1.0 2
-              for x, l in generateAxisLabels style.FormatAxisXLabel sx do
+              for x, l in generateAxisLabels 8. style.FormatAxisXLabel sx do
                 yield Offset((0., -10.), Text(x, hy, VerticalAlign.Baseline, HorizontalAlign.Center, 0.0, l)) |> FontStyle "9pt sans-serif"
             if showRight then
               yield Line [hx,hy; hx,ly] |> LineStyle "black" 1.0 2
-              for y, l in generateAxisLabels style.FormatAxisYLabel sy do
+              for y, l in generateAxisLabels 6. style.FormatAxisYLabel sy do
                 yield Offset((10., 0.), Text(hx, y, VerticalAlign.Middle, HorizontalAlign.Start, 0.0, l)) |> FontStyle "9pt sans-serif"
             if showBottom then
               yield Line [lx,ly; hx,ly] |> LineStyle "black" 1.0 2
-              for x, l in generateAxisLabels style.FormatAxisXLabel sx do
+              for x, l in generateAxisLabels 8. style.FormatAxisXLabel sx do
                 yield Offset((0., 10.), Text(x, ly, VerticalAlign.Hanging, HorizontalAlign.Center, 0.0, l)) |> FontStyle "9pt sans-serif"
             if showLeft then
               yield Line [lx,hy; lx,ly] |> LineStyle "black" 1.0 2
-              for y, l in generateAxisLabels style.FormatAxisYLabel sy do
+              for y, l in generateAxisLabels 6. style.FormatAxisYLabel sy do
                 yield Offset((-10., 0.), Text(lx, y, VerticalAlign.Middle, HorizontalAlign.End, 0.0, l)) |> FontStyle "9pt sans-serif"
             yield shape ]
             

@@ -145,3 +145,35 @@ function render(trigger, state) {
 
 let init = { enabled:false, values: elections.map(e => [e.party, e.y19]) }
 c.interactive("out4", init, update, render)
+
+
+
+
+function bodyy(clr, data) {
+  return c.hack(c.axes("left right bottom", c.overlay([
+    //c.fillColor("#1F77B460",  c.shape(
+    //  [ [0,lo], [16,lo], [16,hi], [0,hi] ])),
+    //c.fillColor("#D6272860",  c.shape(
+    //  [ [data.length-1,lo], [16,lo], [16,hi], [data.length-1,hi] ])),
+    c.strokeColor(clr, line(data)),
+    c.bubble(0, 0, 0, 0)
+  ])))
+}
+
+let cases = [ 4, 418, 8609, 42102, 48069, 30676, 15225, 8647 ]
+let donations = [ 71, 192, 805, 484, 307, 433, 167, 65 ]
+let claimants = [ 1234, 1237, 1240, 1268, 2097, 2450, 2802, 3200 ]
+
+
+
+let ratess = c.overlay([
+  c.nestX(8, 100, c.nestY(0, 50, bodyy("#D62728", cases))),
+  c.nestX(8, 100, c.nestY(50, 100, bodyy("#1F77B4", donations))),
+  c.nestX(8, 100, c.nestY(100, 150, bodyy("#FF7F0E", claimants))),
+  c.font("bold 9pt arial", "black", c.text(5, 15, "COVID cases", "middle start", -90)),
+  c.font("bold 9pt arial", "black", c.text(5, 65, "Donations (£th)", "middle start", -90)),
+  c.font("bold 9pt arial", "black", c.text(5, 115, "Claimants (th)", "middle start", -90))
+])
+
+c.render("out2", ratess)
+

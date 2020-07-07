@@ -50,6 +50,7 @@ type JsCompost =
   abstract axes : string * Shape -> Shape
   abstract render : string * Shape -> unit
   abstract interactive<'e, 's> : string * 's * ('s -> 'e -> 's) * (('e -> unit) -> 's -> Shape) -> unit
+  abstract hack : Shape -> Shape
 
 let scale = 
   { new JsScale with 
@@ -58,6 +59,9 @@ let scale =
   
 let compost = 
   { new JsCompost with
+      member x.hack(sh) = Shape.Style((fun sty -> 
+        { sty with FormatAxisXLabel = fun _ (COV (CO v)) -> 
+            System.DateTime(2020,2,10).AddDays(v*14.).ToString("d/M") }), sh)
       member x.scaleX(sc, sh) = Shape.InnerScale(Some(sc), None, sh) 
       member x.scaleY(sc, sh) = Shape.InnerScale(None, Some(sc), sh) 
       member x.scale(sx, sy, sh) = Shape.InnerScale(Some(sx), Some(sy), sh) 
