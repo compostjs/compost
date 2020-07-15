@@ -118,7 +118,7 @@ let partyColors = {}
 for(var i = 0; i < elections.length; i++)
   partyColors[elections[i].party] = elections[i].color;
 
-function update(state, evt) {
+function update1(state, evt) {
   switch (evt.kind) {
     case 'set':
       if (!state.enabled) return state;
@@ -130,7 +130,7 @@ function update(state, evt) {
   }
 }
 
-function render(trigger, state) {
+function render1(trigger, state) {
   return title("Drag the bars to guess UK election results!",
     c.axes("left bottom", c.scaleY(s.continuous(0, 400),
       c.on({
@@ -143,5 +143,78 @@ function render(trigger, state) {
     ))))
 }
 
-let init = { enabled:false, values: elections.map(e => [e.party, e.y19]) }
-c.interactive("out4", init, update, render)
+let init1 = { enabled:false, values: elections.map(e => [e.party, e.y19]) }
+c.interactive("out4", init1, update1, render1)
+
+// ----------------------------------------------------------------------------
+// DEMO #5: Interactive 'You Draw' chart that lets you resize bars
+// ----------------------------------------------------------------------------
+
+let data = 
+ [ ["Social protection", 14.10], ["Health", 7.40], ["Education", 4.50], 
+   ["General public services", 3.10], ["Economic affairs", 2.40] ]
+
+let colors = 
+  [ "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", 
+    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf" ]
+
+let nums = data.map(v => v[1])
+let sum = nums.reduce((a,b) => a + b)
+let max = Math.max.apply(null, nums)
+let avg = sum / data.length;
+
+let init = {
+  animation:0,
+  guessed:false,
+  max:Math.floor(max * 1.2),
+  values:data.map((v, i) => ({
+    moved: false,
+    color: colors[i],
+    category: v[0],
+    value: avg,
+    correct: v[1],
+    random: Math.random()
+  })).sort((a, b) => a.random - b.random)
+}
+
+function update(state, evt) {
+  switch(evt.kind) {
+    case "animate":
+      return {...state, animation:state.animation + 0.02}
+    case "set":
+      if(state.animation > 0) return state; 
+      let newValues = state.values.map(v => 
+        ({ ...v, 
+           moved: v.category == evt.category ? true : v.moved,
+           value: v.category == evt.category ? evt.value : v.value }))
+      return {...state, values:newValues, guessed:newValues.every(v => v.moved) }
+  }
+  return state;
+}
+function render(trigger, state) {
+  if (state.animation > 0 && state.animation < 1) 
+    window.setTimeout(() => trigger({kind:"animate"}), 10)
+  let o = state.guessed ? {} : {disabled:""}
+  function handler(x, y, e) { 
+    if (e.buttons > 0) trigger({kind:"set", value:x, category:y[0] }) 
+  }
+  return c.html("div", { class:"youguess" }, [ 
+    c.svg(600, 400, c.axes("bottom", c.on({
+        mousemove: handler, mousedown: handler
+      },c.overlay(state.values.map(v => {
+        let av = v.correct * state.animation + v.value * (1 - state.animation);
+        return c.padding(10,0,10,0,c.overlay([
+          c.font("13pt sans-serif", v.color, c.text(state.max*0.98, [v.category, 0.5], v.category, "end")),
+          c.strokeColor(v.color, c.line([ [v.value, [v.category, 0]], [v.value, [v.category, 1]] ])),
+          c.fillColor("#a0a0a030", c.bar(state.max, v.category)),
+          c.fillColor(v.color + (v.moved?"90":"30"), c.bar(av, v.category))
+        ]));
+      }) )))),
+    c.html("div", {style:"width:600px;text-align:center"}, [
+      c.html("button", {...o, 
+        click:() => trigger({kind:"animate"}) }, [ "Show me how I did" ])
+    ])  
+  ]);
+}
+
+c.interactive("out5", init, update, render) 

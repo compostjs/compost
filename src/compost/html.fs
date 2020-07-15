@@ -29,6 +29,9 @@ module Common =
   [<Emit("$0.toString($1)")>]
   let formatInt (i:int) (b:int) : string = failwith "JS"
 
+  [<Emit("typeof($0)")>]
+  let typeOf(n:obj) : string = failwith "!"
+
   [<Emit("(typeof($0)=='number')")>]
   let isNumber(n:obj) : bool = failwith "!"
 
@@ -103,9 +106,7 @@ type DomAttribute =
 
 type DomNode = 
   | Text of string
-  | Delayed of string * DomNode * (string -> unit)
-  | Element of ns:string * tag:string * attributes:(string * DomAttribute)[] * children : DomNode[] * onRender : (HTMLElement -> unit) option
-  | Part of func:(HTMLElement -> unit)
+  | Element of ns:string * tag:string * attributes:(string * DomAttribute)[] * children : DomNode[]
 
 let createTree ns tag args children =
     let attrs = ResizeArray<_>()
@@ -130,71 +131,31 @@ let rec renderVirtual node =
   match node with
   | Text(s) -> 
       box s
-  | Element(ns, tag, attrs, children, None) ->
+  | Element(ns, tag, attrs, children) ->
       createTree ns tag attrs (Array.map renderVirtual children)
-  | Delayed(symbol, body, func) ->
-      counter <- counter + 1
-      let id = sprintf "delayed_%d" counter
-
-      // Virtual dom calls our hook when it creates HTML element, but
-      // we still need to wait until it is added to the HTML tree
-      let rec waitForAdded n (el:HTMLElement) = 
-        if el.parentElement <> null then 
-          el?dataset?renderedSymbol <- symbol
-          el?id <- id
-          func id
-        elif n > 0 then window.setTimeout((fun () -> waitForAdded  (n-1) el), 1) |> ignore
-        else failwith "Delayed element was not created in time"
-
-      // Magic as per https://github.com/Matt-Es`ch/virtual-dom/blob/master/docs/hooks.md
-      let Hook = box(fun () -> ())
-      Hook?prototype?hook <- fun (node:HTMLElement) propertyName previousValue ->
-        if unbox node?dataset?renderedSymbol <> symbol then
-          waitForAdded 10 node
-      let h = createNew Hook ()
-
-      createTree null "div" ["renderhk", Property h] [| renderVirtual body |]
-  | Element _ ->
-      failwith "renderVirtual: Does not support elements with after-render handlers"
-  | Part _ ->
-      failwith "renderVirtual: Does not support parts"
 
 let rec render node = 
   match node with
   | Text(s) -> 
-      document.createTextNode(s) :> Node, ignore
+      document.createTextNode(s) :> Node
 
-  | Delayed(_, _, func) ->
-      counter <- counter + 1
-      let el = document.createElement("div")
-      el.id <- sprintf "delayed_%d" counter
-      el :> Node, (fun () -> func el.id)
-
-  | Part(func) ->
-      let el = document.createElement("div")
-      el :> Node, (fun () -> func el)
-
-  | Element(ns, tag, attrs, children, f) ->
+  | Element(ns, tag, attrs, children) ->
       let el = 
         if ns = null || ns = "" then document.createElement(tag)
         else document.createElementNS(ns, tag) :?> HTMLElement
       let rc = Array.map render children
-      for c, _ in rc do el.appendChild(c) |> ignore
+      for c in rc do el.appendChild(c) |> ignore
       for k, a in attrs do 
         match a with
         | Property(o) -> Common.setProperty el k o
         | Attribute(v) -> el.setAttribute(k, v)
         | Event(f) -> () //el.addEventListener(k, U2.Case1(EventListener(f el)))
-      let onRender () = 
-        for _, f in rc do f()
-        f |> FsOption.iter (fun f -> f el)
-      el :> Node, onRender
+      el :> Node
 
 let renderTo (node:HTMLElement) dom = 
   while box node.lastChild <> null do ignore(node.removeChild(node.lastChild))
-  let el, f = render dom
+  let el = render dom
   node.appendChild(el) |> ignore
-  f()
 
 let createVirtualDomAsyncApp id initial r u = 
   let event = new Event<'T>()
@@ -246,28 +207,7 @@ let (=!>) k f = k, Event(f)
 type El(ns) = 
   member x.Namespace = ns
   static member (?) (el:El, n:string) = fun a b ->
-    Element(el.Namespace, n, Array.ofList a, Array.ofList b, None)
-
-  member x.delayed sym body f =
-    Delayed(sym, body, f)
-
-  member x.part (initial:'State) (fold:'State -> 'Event -> 'State) = 
-    let evt = Control.Event<_>()
-    let mutable state = initial
-    let mutable container = None
-    let mutable renderer = None
-    let render () =
-      match container, renderer with
-      | Some el, Some r -> r state |> renderTo el
-      | _ -> ()
-    evt.Publish.Add(fun e -> state <- fold state e; render ())
-
-    evt.Trigger,
-    fun (r:'State -> DomNode) ->
-      renderer <- Some r
-      Part(fun el -> 
-        container <- Some el
-        render() )
+    Element(el.Namespace, n, Array.ofList a, Array.ofList b)
 
 let h = El(null)
 let s = El("http://www.w3.org/2000/svg")

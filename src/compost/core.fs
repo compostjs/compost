@@ -352,7 +352,7 @@ module Scales =
         
         let (origScales & (sx, sy)), _ = calculateScales shape 
         let (lx, hx), (ly, hy) = getExtremes sx, getExtremes sy
-        
+       
         let LineStyle clr alpha width shape = 
           Style((fun s -> { s with Fill = Solid(1.0, HTML "transparent"); StrokeWidth = Pixels width; StrokeColor=alpha, HTML clr }), shape)
         let FontStyle style shape = 
@@ -360,10 +360,11 @@ module Scales =
 
         let shape = 
           Layered [ 
-            for x in generateAxisSteps sx do
-              yield Line [x,ly; x,hy] |> LineStyle "#e4e4e4" 1.0 1
-            for y in generateAxisSteps sy do
-              yield Line [lx,y; hx,y] |> LineStyle "#e4e4e4" 1.0 1 
+            yield InnerScale(Some sx, Some sy, Layered [
+              for x in generateAxisSteps sx do
+                yield Line [x,ly; x,hy] |> LineStyle "#e4e4e4" 1.0 1
+              for y in generateAxisSteps sy do
+                yield Line [lx,y; hx,y] |> LineStyle "#e4e4e4" 1.0 1 ])
             if showTop then
               yield Line [lx,hy; hx,hy] |> LineStyle "black" 1.0 2
               for x, l in generateAxisLabels style.FormatAxisXLabel sx do

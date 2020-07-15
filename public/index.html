@@ -2,7 +2,30 @@
 <html>
 <head>
   <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-  <style> button { padding:5px 20px 5px 20px; margin:10px } </style>
+  <style> 
+    .youguess button {
+      margin-top:10px;
+      border-style:solid;
+      border-color:#606060;
+      background:#404040;
+      color:#e0e0e0;
+      padding:10px 30px 10px 30px;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:12pt;
+    }
+    .youguess button:hover, .youguess button:focus, .youguess button:active {  
+      border-color:#606060;
+      color:#e0e0e0;
+      background:#606060;
+    }
+    .youguess button:disabled {
+      border-color:#606060;
+      color:#e0e0e0;
+      background:#606060;
+      opacity:0.5;
+    }
+  </style>
 </head>
 <body style="background:#ffffff">
   <h1>DEMO #1</h1>
@@ -17,6 +40,10 @@
   <h1>DEMO #4</h1>
   <div id="out4" style="margin-left:100px;width:600px;height:400px;"></div>
 
+  <h1>DEMO #5</h1>
+  <div id="out5" style="margin-left:100px"></div>
+
+  <br /><br /><br /><br /><br /><br /><br />
   <script src="bundle.js"></script>
 </body>
 </html>

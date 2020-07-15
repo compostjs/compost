@@ -139,7 +139,9 @@ let s1 = [ [["Labour", 0], 0], [["Labour", 0], 152],
         <code>touchstart</code>, <code>touchmove</code>. Those are called with x and y coordinates of the event. You can also specify <code>touchend</code>
         and <code>mouseleave</code> handlers, but those do not get coordinates of the event.
         For example of how to specify handlers, see the <a href="demos.html#youdraw-bar">You draw it</a> demo.</p></td></tr>
-      <tr><th>c.interactive</th><td><code class="f">string * State * (State -> Event -> State) * ((Event -> unit) -> State -> Shape) -> unit</code><p>
+        <tr><th>c.svg</th><td><code class="f">float * float * Shape -> Html</code><p>Render the given shape and build an object representing the chart as an HTML <code>&lt;svg&gt;</code> element. The first two arguments specify the desired width and height of the SVG element in pixels. This operation is useful if you want to create an interactive chart using <code>c.interactive</code> and want to add some custom HTML elements using <code>c.html</code>.</p></td></tr>
+        <tr><th>c.html</th><td><code class="f">string * obj * (Html | string)[] -> Html</code><p>Creates a HTML element that can be returned as a result of the rendering function in <code>c.interactive</code>. The API is inspired by <a href="https://github.com/hyperhype/hyperscript">HyperAcript</a>. The first element is a tag name, followed by an object that specifies element properties (value of type string) and event handlers (value of type function). The third parameter is an array of children, which can be either text or other HTML elements.</p></td></tr>
+        <tr><th>c.interactive</th><td><code class="f">string * State * (State -> Event -> State) * ((Event -> unit) -> State -> (Html | Shape)) -> unit</code><p>
         Create an interactive chart using a given HTML element ID. For an example of how this works,
         see the <a href="demos.html#youdraw-bar">You draw it</a> demo. This is based on the <a href="https://guide.elm-lang.org/architecture/">Elm architecture</a>
         (also known Model-View-Update). The last three parameters specify the initial state,

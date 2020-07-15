@@ -49,6 +49,8 @@ type JsCompost =
   abstract on : obj * Shape -> Shape
   abstract axes : string * Shape -> Shape
   abstract render : string * Shape -> unit
+  abstract svg : float * float * Shape -> DomNode
+  abstract html : string * obj * DomNode[] -> DomNode
   abstract interactive<'e, 's> : string * 's * ('s -> 'e -> 's) * (('e -> unit) -> 's -> Shape) -> unit
 
 let scale = 
@@ -96,10 +98,29 @@ let compost =
               | "touchend" -> TouchEnd(fun me -> f [| me |])
               | s -> failwithf "Unsupported event type '%s' passed to the 'on' primitive." s
         ], s)
+      member x.svg(w, h, shape) = 
+        Compost.createSvg false false (w, h) shape
+      member x.html(tag, attrs, children) = 
+        let attrs = 
+          [| for a in Common.keys(attrs) ->
+              let p = Common.getProperty attrs a
+              if (Common.typeOf p = "function") then
+                a, DomAttribute.Event(fun e h -> 
+                  Common.apply p [| box e; box h |])
+              else 
+                a, DomAttribute.Attribute(unbox p) |]
+        let children = children |> Array.map (fun c ->
+          if Common.typeOf c = "string" then DomNode.Text(unbox c)
+          else c )         
+        DomNode.Element(null, tag, attrs, children)
       member x.interactive(id, init, update, render) =
         let render t s =
           let el = document.getElementById(id)
-          Compost.createSvg false false (el.clientWidth, el.clientHeight) (render t s)
+          let res = render t s
+          if Common.getProperty res "constructor" = Common.getProperty (DomNode.Text "") "constructor" then
+            unbox<DomNode> res
+          else 
+            Compost.createSvg false false (el.clientWidth, el.clientHeight) res
         Html.createVirtualDomApp id init render update
       member x.render(id, viz) = 
         let el = document.getElementById(id)
