@@ -1,0 +1,79 @@
+{
+  "anim-barchart": {
+    "scope": "fsharp",
+    "prefix": "anim-barchart",
+    "body": [
+      "let barChart data = ",
+      "  Shape.Axes(false, false, true, true, ",
+      "     Shape.Layered [",
+      "       for p, clr, v in data -> ",
+      "         Derived.FillColor(clr,",
+      "           Shape.Padding((0., 10., 0., 10.), ",
+      "             Derived.Column(ca p, co v)) )",
+      "  ])"
+    ],
+    "description": "anim-barchart"
+	},
+  "anim-barchart-scaled": {
+    "scope": "fsharp",
+    "prefix": "anim-barchart-scaled",
+    "body": [
+      "let barChart data = ",
+      "  Shape.Axes(false, false, true, true, ",
+      "     Shape.InnerScale(None, Some(Continuous(co 0, co 400)), Shape.Layered [",
+      "       for p, clr, v in data -> ",
+      "         Derived.FillColor(clr,",
+      "           Shape.Padding((0., 10., 0., 10.), ",
+      "             Derived.Column(ca p, co v)) )",
+      "  ]))"
+    ],
+    "description": "anim-barchart-scaled"
+	},
+	"anim-timeout": {
+    "scope": "fsharp",
+    "prefix": "anim-timeout",
+    "body": [
+      "if state > 0.0 && state < 1.0 then window.setTimeout((fun () -> trigger Animate), 10) |> ignore"
+    ],
+    "description": "anim-timeout"
+  },
+	"anim-scale": {
+    "scope": "fsharp",
+    "prefix": "anim-scale",
+    "body": [
+      "let data = [ for p, c, v0, v1 in elections -> p, c, float v0 + float (v1 - v0) * state ]"
+    ],
+    "description": "anim-scale"
+  },
+	"line-back": {
+    "scope": "fsharp",
+    "prefix": "line-back",
+    "body": [
+			"Derived.FillColor(\"#ff9896\",",
+			"  Shape.Shape [ ",
+			"    (numv (List.length gbpusd - 1), numv 1); (numv 16, numv 1); ",
+			"    (numv 16, numv 1.8); (numv (List.length gbpusd - 1), numv 1.8) ] )"
+    ],
+    "description": "line-back"
+	},
+	"title-title": {
+    "scope": "fsharp",
+    "prefix": "title-title",
+    "body": [
+			"Shape.InnerScale(Some(Continuous(co 0, co 100)), Some(Continuous(co 0, co 100)),",
+      "  Derived.Font(\"14pt arial\", \"black\",",
+      "    Shape.Text(numv 50, numv 50, Middle, ",
+      "      Center, 0.0, \"GBP-USD exchange rate (June-July 2016)\") )"
+    ],
+    "description": "title-title"
+	},
+	"title-scales": {
+    "scope": "fsharp",
+    "prefix": "title-scales",
+    "body": [
+      "Shape.NestX(numv 0, numv 100, Shape.NestY(numv 90, numv 100, title))",
+      "Shape.NestX(numv 0, numv 100, Shape.NestY(numv 0, numv 90, body))"    
+    ],
+    "description": "title-scales"
+  },	
+}
