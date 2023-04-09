@@ -6,12 +6,12 @@ open Browser.Types
 // ------------------------------------------------------------------------------------------------
 // Domain that users see
 // ------------------------------------------------------------------------------------------------
-  
+
 type Color =
   | RGB of int * int * int
   | HTML of string
 
-type AlphaColor = float * Color 
+type AlphaColor = float * Color
 type Width = Pixels of int
 type GradientStop = float * AlphaColor
 
@@ -26,29 +26,39 @@ type Number =
 type HorizontalAlign = Start | Center | End
 type VerticalAlign = Baseline | Middle | Hanging
 
-type continuous<[<Measure>] 'u> = CO of float<'u> 
+type continuous<[<Measure>] 'u> = CO of float<'u>
 type categorical<[<Measure>] 'u> = CA of string
 
-type Value<[<Measure>] 'u> = 
+type Value<[<Measure>] 'u> =
   | CAR of categorical<'u> * float
   | COV of continuous<'u>
+
+  static member OfUnit(v: Value<1>): Value<'u> =
+    match v with
+    | CAR(CA s, r) -> CAR(CA s, r)
+    | COV(CO v) -> COV(CO(LanguagePrimitives.FloatWithMeasure v))
 
 type Scale<[<Measure>] 'v> =
   | Continuous of continuous<'v> * continuous<'v>
   | Categorical of categorical<'v>[]
 
-type Style = 
+  member this.ToUnit(): Scale<1> =
+      match this with
+      | Continuous(CO lo, CO hi) -> Continuous(CO(float lo * 1.<1>), CO(float hi * 1.<1>))
+      | Categorical(vals) -> vals |> Array.map (fun (CA s) -> CA s) |> Categorical
+
+type Style =
   { StrokeColor : AlphaColor
     StrokeWidth : Width
     StrokeDashArray : seq<Number>
-    Fill : FillStyle 
+    Fill : FillStyle
     Animation : option<int * string * (Style -> Style)>
     Font : string
     Cursor : string
     FormatAxisXLabel : Scale<1> -> Value<1> -> string
     FormatAxisYLabel : Scale<1> -> Value<1> -> string }
 
-type EventHandler<[<Measure>] 'vx, [<Measure>] 'vy> = 
+type EventHandler<[<Measure>] 'vx, [<Measure>] 'vy> =
   | MouseMove of (MouseEvent -> (Value<'vx> * Value<'vy>) -> unit)
   | MouseUp of (MouseEvent -> (Value<'vx> * Value<'vy>) -> unit)
   | MouseDown of (MouseEvent -> (Value<'vx> * Value<'vy>) -> unit)
@@ -58,11 +68,11 @@ type EventHandler<[<Measure>] 'vx, [<Measure>] 'vy> =
   | TouchEnd of (TouchEvent -> unit)
   | MouseLeave of (MouseEvent -> unit)
 
-type Orientation = 
+type Orientation =
   | Vertical
   | Horizontal
 
-type Shape<[<Measure>] 'vx, [<Measure>] 'vy> = 
+type Shape<[<Measure>] 'vx, [<Measure>] 'vy> =
   | Style of (Style -> Style) * Shape<'vx, 'vy>
   | Text of Value<'vx> * Value<'vy> * VerticalAlign * HorizontalAlign * float * string
   | AutoScale of bool * bool * Shape<'vx, 'vy>
@@ -78,29 +88,29 @@ type Shape<[<Measure>] 'vx, [<Measure>] 'vy> =
   | Interactive of seq<EventHandler<'vx, 'vy>> * Shape<'vx, 'vy>
   | Padding of (float * float * float * float) * Shape<'vx, 'vy>
   | Offset of (float * float) * Shape<'vx, 'vy>
- 
+
 // ------------------------------------------------------------------------------------------------
 // SVG stuff
 // ------------------------------------------------------------------------------------------------
 
-module Svg =   
+module Svg =
 
-  type StringBuilder() = 
-    let mutable strs = [] 
+  type StringBuilder() =
+    let mutable strs = []
     member x.Append(s) = strs <- s::strs
     override x.ToString() = String.concat "" (List.rev strs)
 
-  type PathSegment = 
+  type PathSegment =
     | MoveTo of (float * float)
     | LineTo of (float * float)
 
   type SvgStyle = string
-  
+
   type Svg =
     | Path of PathSegment[] * SvgStyle
     | Ellipse of (float * float) * (float * float) * SvgStyle
     | Rect of (float * float) * (float * float) * SvgStyle
-    | Text of (float * float) * string * float * SvgStyle 
+    | Text of (float * float) * string * float * SvgStyle
     | Combine of Svg[]
     | Empty
 
@@ -108,7 +118,7 @@ module Svg =
     | Combine svgs -> Combine(Array.map (mapSvg f) svgs)
     | svg -> f svg
 
-  let formatPath path = 
+  let formatPath path =
     let sb = StringBuilder()
     for ps in path do
       match ps with
@@ -116,92 +126,103 @@ module Svg =
       | LineTo(x, y) -> sb.Append("L" + string x + " " + string y + " ")
     sb.ToString()
 
-  type RenderingContext = 
+  type RenderingContext =
     { Definitions : ResizeArray<DomNode> }
 
-  let rec renderSvg ctx svg = seq { 
+  let rec renderSvg ctx svg = seq {
     match svg with
     | Empty -> ()
-    | Text((x,y), t, rotation, style) ->
-        let attrs = 
-          [ yield "style" => style 
+    | Text((x,y), t, rotation, css) ->
+        s "text" [
+            style css
             if rotation = 0.0 then
-              yield "x" => string x
-              yield "y" => string y
+              "x" => x
+              "y" => y
             else
-              yield "x" => "0"
-              yield "y" => "0"
-              yield "transform" => sprintf "translate(%f,%f) rotate(%f)" x y rotation ]
-        yield s?text attrs [ text t ]
+              "x" => "0"
+              "y" => "0"
+              "transform" => $"translate(%f{x},%f{y}) rotate(%f{rotation})"
+            children [ text t ]
+        ]
 
     | Combine ss ->
         for s in ss do yield! renderSvg ctx s
 
-    | Ellipse((cx, cy),(rx, ry), style) ->
-        let attrs = 
-          [ "cx" => string cx; "cy" => string cy;
-            "rx" => string rx; "ry" => string ry; "style" => style ]
-        yield s?ellipse attrs []
+    | Ellipse((cx, cy),(rx, ry), css) ->
+        s "ellipse" [
+            "cx" => cx
+            "cy" => cy
+            "rx" => rx
+            "ry" => ry
+            style css
+        ]
 
-    | Rect((x1, y1),(x2, y2), style) ->
+    | Rect((x1, y1),(x2, y2), css) ->
         let l, t = min x1 x2, min y1 y2
         let w, h = abs (x1 - x2), abs (y1 - y2)
-        let attrs = 
-          [ "x" => string l; "y" => string t; "width" => string w; 
-            "height" => string h; "style" => style ]
-        yield s?rect attrs []
+        s "rect" [
+            "x" => l
+            "y" => t
+            "width" => w
+            "height" => h
+            style css
+        ]
 
-    | Path(p, style) ->
-        let attrs = [ "d" => formatPath p; "style" => style ]
-        yield s?path attrs  [] }
+    | Path(p, css) ->
+        s "path" [ "d" => formatPath p; style css ]
+  }
 
   let formatColor = function
-    | RGB(r,g,b) -> sprintf "rgb(%d, %d, %d)" r g b
+    | RGB(r,g,b) -> $"rgb(%d{r}, %d{g}, %d{b})"
     | HTML(clr) -> clr
 
   let formatNumber = function
     | Integer n -> string n
     | Percentage p -> string p + "%"
 
-  let rec formatStyle (defs:ResizeArray<_>) style = 
+  let rec formatStyle (defs:ResizeArray<_>) style =
     let style, anim =
-      match style.Animation with 
+      match style.Animation with
       | Some (ms, ease, anim) ->
           let id = "anim_" + System.Guid.NewGuid().ToString().Replace("-", "")
           let fromstyle = formatStyle defs { style with Animation = None }
           let tostyle = formatStyle defs { anim style with Animation = None }
-          h?style [] [ text (sprintf "@keyframes %s { from { %s } to { %s } }" id fromstyle tostyle) ] |> defs.Add
-          anim style, sprintf "animation: %s %dms %s; " id ms ease
+          h "style" [ children [ text ($"@keyframes %s{id} {{ from {{ %s{fromstyle} }} to {{ %s{tostyle} }} }}") ] ] |> defs.Add
+          anim style, $"animation: %s{id} %d{ms}ms %s{ease}; "
       | None -> style, ""
 
     anim +
     ( String.concat "" [ for c in style.Cursor.Split(',') -> "cursor:" + c + ";" ] ) +
     ( "font:" + style.Font + ";" ) +
-    ( let (so, clr) = style.StrokeColor 
+    ( let (so, clr) = style.StrokeColor
       let (Pixels sw) = style.StrokeWidth
-      sprintf "stroke-opacity:%f; stroke-width:%dpx; stroke:%s; " so sw (formatColor clr) ) +
-    ( if Seq.isEmpty style.StrokeDashArray then "" 
+      $"stroke-opacity:%f{so}; stroke-width:%d{sw}px; stroke:%s{formatColor clr}; " ) +
+    ( if Seq.isEmpty style.StrokeDashArray then ""
       else "stroke-dasharray:" + String.concat "," (Seq.map formatNumber style.StrokeDashArray) + ";" ) +
     ( match style.Fill with
       | LinearGradient(points) ->
           let id = "gradient_" + System.Guid.NewGuid().ToString().Replace("-", "")
-          s?linearGradient ["id"=>id] 
-            [ for pt, (o, clr) in points ->
-                s?stop ["offset"=> string pt + "%"; "stop-color" => formatColor clr; "stop-opacity" => string o ] [] ]
+          s "linearGradient" [
+            "id"=>id
+            children [
+              for pt, (o, clr) in points ->
+                s "stop" ["offset" => $"{pt}%%"; "stop-color" => formatColor clr; "stop-opacity" => o ]
+              ]
+          ]
           |> defs.Add
-          sprintf "fill:url(#%s)" id
+          $"fill:url(#%s{id})"
       | Solid(fo, clr) ->
-          sprintf "fill-opacity:%f; fill:%s; " fo (formatColor clr) )
+          $"fill-opacity:%f{fo}; fill:%s{formatColor clr}; " )
 
 // ------------------------------------------------------------------------------------------------
 // Calculating scales
 // ------------------------------------------------------------------------------------------------
 
-module Scales = 
+module Scales =
 
-  type ScaledShape<[<Measure>] 'vx, [<Measure>] 'vy> = 
+  type ScaledShape<[<Measure>] 'vx, [<Measure>] 'vy> =
     | ScaledStyle of (Style -> Style) * ScaledShape<'vx, 'vy>
-    | ScaledText of Value<'vx> * Value<'vy> * VerticalAlign * HorizontalAlign * float * string    
+    | ScaledText of Value<'vx> * Value<'vy> * VerticalAlign * HorizontalAlign * float * string
     | ScaledLine of (Value<'vx> * Value<'vy>)[]
     | ScaledBubble of Value<'vx> * Value<'vy> * float * float
     | ScaledShape of (Value<'vx> * Value<'vy>)[]
@@ -209,7 +230,7 @@ module Scales =
     | ScaledInteractive of seq<EventHandler<'vx, 'vy>> * Scale<'vx> * Scale<'vy> * ScaledShape<'vx, 'vy>
     | ScaledPadding of (float * float * float * float) * Scale<'vx> * Scale<'vy> * ScaledShape<'vx, 'vy>
     | ScaledOffset of (float * float) * ScaledShape<'vx, 'vy>
-    
+
     | ScaledNestX of Value<'vx> * Value<'vx> * Scale<'vx> * ScaledShape<'vx, 'vy>
     | ScaledNestY of Value<'vy> * Value<'vy> * Scale<'vy> * ScaledShape<'vx, 'vy>
 
@@ -217,27 +238,27 @@ module Scales =
     | Continuous(l, h) -> COV l, COV h
     | Categorical(vals) ->  CAR(vals.[0], 0.0), CAR(vals.[vals.Length-1], 1.0)
 
-  /// Given a range, return a new aligned range together with the magnitude  
-  let calculateMagnitudeAndRange (lo:float, hi:float) = 
+  /// Given a range, return a new aligned range together with the magnitude
+  let calculateMagnitudeAndRange (lo:float, hi:float) =
     let magnitude = 10. ** round (log10 (hi - lo))
     let magnitude = magnitude / 2.
     magnitude, (floor (lo / magnitude) * magnitude, ceil (hi / magnitude) * magnitude)
 
   /// Get number of decimal points to show for the given range
-  let decimalPoints range = 
+  let decimalPoints range =
     let magnitude, _ = calculateMagnitudeAndRange range
     max 0. (ceil (-(log10 magnitude)))
 
   /// Extend the given range to a nicely adjusted size
   let adjustRange range = snd (calculateMagnitudeAndRange range)
   let adjustRangeUnits (l:float<'u>,h:float<'u>) : float<'u> * float<'u> =
-    let l, h = adjustRange (unbox l, unbox h) in unbox l, unbox h
+    let l, h = adjustRange (float l, float h) in LanguagePrimitives.FloatWithMeasure l, LanguagePrimitives.FloatWithMeasure h
 
   let toArray s = Array.ofSeq s // REVIEW: Hack to avoid Float64Array (which behaves oddly in Safari) see https://github.com/zloirock/core-js/issues/285
 
   /// Generate points for a grid. Count specifies how many points to generate
   /// (this is minimm - the result will be up to 5x more).
-  let generateSteps count k (lo, hi) = 
+  let generateSteps count k (lo, hi) =
     let magnitude, (nlo, nhi) = calculateMagnitudeAndRange (lo, hi)
     let dividers = [0.2; 0.5; 1.; 2.; 5.; 10.; 20.; 40.; 50.; 60.; 80.; 100.]
     let magnitudes = dividers |> Seq.map (fun d -> magnitude / d)
@@ -247,30 +268,33 @@ module Scales =
             if v >= lo && v <= hi then yield v } |> toArray
 
   let generateAxisSteps s =
-    match s with 
+    match s with
     | Continuous(CO l, CO h) ->
-        generateSteps 6. 1. (float l, float h) |> Array.map (fun f -> COV(CO (unbox f)))
+        generateSteps 6. 1. (float l, float h) |> Array.map (fun f -> COV(CO(LanguagePrimitives.FloatWithMeasure f)))
     | Categorical vs -> [| for CA s in vs -> CAR(CA s, 0.5) |]
 
-  let generateAxisLabels fmt (s:Scale<'v>) : (Value<'v> * string)[] =
-    let sunit = unbox<Scale<1>> s
-    match s with 
+  let generateAxisLabels fmt (s: Scale<'u>) : (Value<'v> * string)[] =
+    let sunit = s.ToUnit()
+    match s with
     | Continuous(CO l, CO h) ->
-        generateSteps 6. 2. (float l, float h) 
-        |> Array.map (fun f -> COV(CO (unbox f)), fmt sunit (COV(CO(unbox<float<1>> f))))
+        let l, h = (float l, float h)
+        generateSteps 6. 2. (l, h)
+        |> Array.map (fun f ->
+          let f = COV(CO (LanguagePrimitives.FloatWithMeasure f))
+          f, fmt sunit f)
     | Categorical vs -> [| for v & CA s in vs -> CAR(CA s, 0.5), fmt sunit (CAR(CA s, 0.5)) |]
 
   let unionScales s1 s2 =
     match s1, s2 with
     | Continuous(l1, h1), Continuous(l2, h2) -> Continuous(min l1 l2, max h1 h2)
     | Categorical(v1), Categorical(v2) -> Categorical(Array.distinct (Array.append v1 v2))
-    | _ -> 
+    | _ ->
         failwith "Cannot union continuous with categorical"
 
-  let calculateShapeScale vals = 
+  let calculateShapeScale vals =
     let scales =
       vals |> Array.fold (fun state value ->
-        match state, value with 
+        match state, value with
         | Choice1Of3(), COV(CO v) -> Choice2Of3([v])
         | Choice2Of3(vs), COV(CO v) -> Choice2Of3(v::vs)
         | Choice1Of3(), CAR(CA x, _) -> Choice3Of3([x])
@@ -281,15 +305,15 @@ module Scales =
     | Choice2Of3(vs) -> Continuous (CO (List.min vs), CO (List.max vs))
     | Choice3Of3(xs) -> Categorical (Array.distinct [| for x in List.rev xs -> CA x |])
 
-  let calculateShapeScales points = 
-    let xs = points |> Array.map fst 
+  let calculateShapeScales points =
+    let xs = points |> Array.map fst
     let ys = points |> Array.map snd
     calculateShapeScale xs, calculateShapeScale ys
 
   // Always returns objects with the same inner and outer scales
   // but outer scales can be replaced later by replaceScales
-  let rec calculateScales<[<Measure>] 'ux, [<Measure>] 'uy> style (shape:Shape<'ux, 'uy>) = 
-    let calculateScalesStyle = calculateScales 
+  let rec calculateScales<[<Measure>] 'ux, [<Measure>] 'uy> style (shape:Shape<'ux, 'uy>) =
+    let calculateScalesStyle = calculateScales
     let calculateScales = calculateScales style
     match shape with
     | Style(f, shape) ->
@@ -315,7 +339,7 @@ module Scales =
         let autoScale = function
           | Continuous(CO l, CO h) -> let l, h = adjustRangeUnits (l, h) in Continuous(CO l, CO h)
           | scale -> scale
-        let scales = 
+        let scales =
           ( if ax then autoScale isx else isx ),
           ( if ay then autoScale isy else isy )
         scales, shape
@@ -338,28 +362,28 @@ module Scales =
         let scales = makeSingletonScale x, makeSingletonScale y
         scales, ScaledText(x, y, va, ha, r, t)
 
-    | Line line -> 
-        let line = Seq.toArray line 
+    | Line line ->
+        let line = Seq.toArray line
         let scales = calculateShapeScales line
         scales, ScaledLine(line)
 
-    | Shape points -> 
+    | Shape points ->
         let points = Seq.toArray points
         let scales = calculateShapeScales points
         scales, ScaledShape(points)
-    
+
     | Axes(showTop, showRight, showBottom, showLeft, shape) ->
-        
-        let (origScales & (sx, sy)), _ = calculateScales shape 
+
+        let (sx, sy), _ = calculateScales shape
         let (lx, hx), (ly, hy) = getExtremes sx, getExtremes sy
-       
-        let LineStyle clr alpha width shape = 
+
+        let LineStyle clr alpha width shape =
           Style((fun s -> { s with Fill = Solid(1.0, HTML "transparent"); StrokeWidth = Pixels width; StrokeColor=alpha, HTML clr }), shape)
-        let FontStyle style shape = 
+        let FontStyle style shape =
           Style((fun s -> { s with Font = style; Fill = Solid(1.0, HTML "black"); StrokeColor = 0.0, HTML "transparent" }), shape)
 
-        let shape = 
-          Layered [ 
+        let shape =
+          Layered [
             yield InnerScale(Some sx, Some sy, Layered [
               for x in generateAxisSteps sx do
                 yield Line [x,ly; x,hy] |> LineStyle "#e4e4e4" 1.0 1
@@ -368,29 +392,33 @@ module Scales =
             if showTop then
               yield Line [lx,hy; hx,hy] |> LineStyle "black" 1.0 2
               for x, l in generateAxisLabels style.FormatAxisXLabel sx do
+                let x = Value<_>.OfUnit x
                 yield Offset((0., -10.), Text(x, hy, VerticalAlign.Baseline, HorizontalAlign.Center, 0.0, l)) |> FontStyle "9pt sans-serif"
             if showRight then
               yield Line [hx,hy; hx,ly] |> LineStyle "black" 1.0 2
               for y, l in generateAxisLabels style.FormatAxisYLabel sy do
+                let y = Value<_>.OfUnit y
                 yield Offset((10., 0.), Text(hx, y, VerticalAlign.Middle, HorizontalAlign.Start, 0.0, l)) |> FontStyle "9pt sans-serif"
             if showBottom then
               yield Line [lx,ly; hx,ly] |> LineStyle "black" 1.0 2
               for x, l in generateAxisLabels style.FormatAxisXLabel sx do
+                let x = Value<_>.OfUnit x
                 yield Offset((0., 10.), Text(x, ly, VerticalAlign.Hanging, HorizontalAlign.Center, 0.0, l)) |> FontStyle "9pt sans-serif"
             if showLeft then
               yield Line [lx,hy; lx,ly] |> LineStyle "black" 1.0 2
               for y, l in generateAxisLabels style.FormatAxisYLabel sy do
+                let y = Value<_>.OfUnit y
                 yield Offset((-10., 0.), Text(lx, y, VerticalAlign.Middle, HorizontalAlign.End, 0.0, l)) |> FontStyle "9pt sans-serif"
             yield shape ]
-            
-        let padding = 
+
+        let padding =
           (if showTop then 30. else 0.), (if showRight then 50. else 0.),
-          (if showBottom then 30. else 0.), (if showLeft then 50. else 0.) 
+          (if showBottom then 30. else 0.), (if showLeft then 50. else 0.)
         calculateScales (Padding(padding, shape))
 
     | Layered shapes ->
         let shapes = shapes |> Array.ofSeq
-        let scaled = shapes |> Array.map calculateScales 
+        let scaled = shapes |> Array.map calculateScales
         let sxs = scaled |> Array.map (fun ((sx, _), _) -> sx)
         let sys = scaled |> Array.map (fun ((_, sy), _) -> sy)
         let scales = (Array.reduce unionScales sxs, Array.reduce unionScales sys)
@@ -405,8 +433,8 @@ module Scales =
 // Projections
 // ------------------------------------------------------------------------------------------------
 
-module Projections = 
-  let projectOne reversed (tlv:float<_>, thv:float<_>) scale coord = 
+module Projections =
+  let projectOne reversed (tlv:float<_>, thv:float<_>) scale coord =
     match scale, coord with
     | Categorical(vals), (CAR(CA v,f)) ->
         let size = (thv - tlv) / float vals.Length
@@ -422,8 +450,8 @@ module Projections =
   let projectOneX a = projectOne false a
   let projectOneY a = projectOne true a
 
-  let projectInvOne reversed (l:float, h:float) s (v:float) = 
-    match s with 
+  let projectInvOne reversed (l:float, h:float) s (v:float) =
+    match s with
     | Continuous(CO slv, CO shv) ->
         if reversed then COV(CO (shv - (v - l) / (h - l) * (shv - slv)))
         else COV(CO (slv + (v - l) / (h - l) * (shv - slv)))
@@ -437,7 +465,7 @@ module Projections =
         else CAR(cats.[int i], f)
 
   let projectInv (x1, y1, x2, y2) (sx, sy) (x, y) =
-    projectInvOne false (x1, x2) sx x, 
+    projectInvOne false (x1, x2) sx x,
     projectInvOne true (y1, y2) sy y
 
 // ------------------------------------------------------------------------------------------------
@@ -445,36 +473,36 @@ module Projections =
 // ------------------------------------------------------------------------------------------------
 
 
-module Drawing = 
+module Drawing =
   open Svg
   open Scales
   open Projections
 
-  type DrawingContext = 
+  type DrawingContext =
     { Style : Style
       Definitions : ResizeArray<DomNode> }
 
-  let rec hideFill style = 
+  let rec hideFill style =
     { style with Fill = Solid(0.0, RGB(0, 0, 0)); Animation = match style.Animation with Some(n,e,f) -> Some(n,e,f >> hideFill) | _ -> None }
-  let rec hideStroke style = 
+  let rec hideStroke style =
     { style with StrokeColor = (0.0, snd style.StrokeColor); Animation = match style.Animation with Some(n,e,f) -> Some(n,e,f >> hideStroke) | _ -> None }
 
-  let rec drawShape ctx ((x1, y1, x2, y2) as area) ((sx, sy) as scales) (shape:ScaledShape<'ux, 'uy>) =     
+  let rec drawShape ctx ((x1, y1, x2, y2) as area) ((sx, sy) as scales) (shape:ScaledShape<'ux, 'uy>) =
 
     let project (vx, vy) =
       projectOneX (x1, x2) sx vx, projectOneY (y1, y2) sy vy
 
     match shape with
-    | ScaledNestX(p1, p2, isx, shape) -> 
+    | ScaledNestX(p1, p2, isx, shape) ->
         let x1' = projectOneX (x1, x2) sx p1
-        let x2' = projectOneX (x1, x2) sx p2        
+        let x2' = projectOneX (x1, x2) sx p2
         //let x1', x2' = if x2 < x1 then max x1' x2', min x1' x2' else min x1' x2', max x1' x2'
         drawShape ctx (x1', y1, x2', y2) (isx, sy) shape
 
-    | ScaledNestY(p1, p2, isy, shape) -> 
+    | ScaledNestY(p1, p2, isy, shape) ->
         let y1' = projectOneY (y1, y2) sy p1
         let y2' = projectOneY (y1, y2) sy p2
-        //let y1', y2' = if y2 < y1 then  min y1' y2', max y1' y2' else max y1' y2', min y1' y2' 
+        //let y1', y2' = if y2 < y1 then  min y1' y2', max y1' y2' else max y1' y2', min y1' y2'
         drawShape ctx (x1, y1', x2, y2') (sx, isy) shape
 
     | ScaledOffset((dx, dy), shape) ->
@@ -486,47 +514,47 @@ module Drawing =
     | ScaledStyle(f, shape) ->
         drawShape { ctx with Style = f ctx.Style } area scales shape
 
-    | ScaledShape(points) -> 
-        let path = 
+    | ScaledShape(points) ->
+        let path =
           [| yield MoveTo(project (points.[0]))
-             for pt in Seq.skip 1 points do yield LineTo(project pt) 
+             for pt in Seq.skip 1 points do yield LineTo(project pt)
              yield LineTo(project (points.[0])) |]
-        Path(path, formatStyle ctx.Definitions (hideStroke ctx.Style)) 
+        Path(path, formatStyle ctx.Definitions (hideStroke ctx.Style))
 
     | ScaledPadding((t, r, b, l), isx, isy, shape) ->
         let calculateNestedRange rev (v1, v2) ins outs =
-          match ins with 
-          | Continuous(CO l, CO h) -> 
-              let pos = 
+          match ins with
+          | Continuous(CO l, CO h) ->
+              let pos =
                 [ projectOne rev (v1, v2) outs (COV (CO l))
                   projectOne rev (v1, v2) outs (COV (CO h)) ]
               Seq.min pos, Seq.max pos
-          | Categorical(vals) ->              
-              let pos = vals |> Seq.collect (fun v -> 
+          | Categorical(vals) ->
+              let pos = vals |> Seq.collect (fun v ->
                 [ projectOne rev (v1, v2) outs (CAR(v, 0.0))
                   projectOne rev (v1, v2) outs (CAR(v, 1.0)) ])
               Seq.min pos, Seq.max pos
           //|> fun rs -> printfn "calculateNestedRange %A %A %A = %A" (v1, v2) ins outs rs; rs
-          
+
         let x1', x2' = calculateNestedRange false (x1, x2) isx sx
         let y1', y2' = calculateNestedRange true (y1, y2) isy sy
         //printfn "PADDING: %A\nAXES: %A\nAREA: %A\nNEW AREA: %A\nAFTER PAD: %A\n\n" (t, r, b, l) (isx, isy)  area (x1', y1', x2', y2') (x1' + l, y1' + t, x2' - r, y2' - b)
         drawShape ctx (x1'+l, y1'+t, x2'-r, y2'-b) (isx, isy) shape
 
-    | ScaledLine line -> 
-        let path = 
-          [ yield MoveTo(project (Seq.head line)) 
+    | ScaledLine line ->
+        let path =
+          [ yield MoveTo(project (Seq.head line))
             for pt in Seq.skip 1 line do yield LineTo (project pt) ]
           |> Array.ofList
         Path(path, formatStyle ctx.Definitions (hideFill ctx.Style))
 
-    | ScaledText(x, y, va, ha, r, t) -> 
+    | ScaledText(x, y, va, ha, r, t) ->
         let va = match va with Baseline -> "baseline" | Hanging -> "hanging" | Middle -> "middle"
         let ha = match ha with Start -> "start" | Center -> "middle" | End -> "end"
         let xy = project (x, y)
-        Text(xy, t, r, sprintf "alignment-baseline:%s; text-anchor:%s;" va ha + formatStyle ctx.Definitions ctx.Style)
+        Text(xy, t, r, $"alignment-baseline:%s{va}; text-anchor:%s{ha};" + formatStyle ctx.Definitions ctx.Style)
 
-    | ScaledBubble(x, y, rx, ry) -> 
+    | ScaledBubble(x, y, rx, ry) ->
         Ellipse(project (x, y), (rx, ry), formatStyle ctx.Definitions ctx.Style)
 
     | ScaledInteractive(f, _, _, shape) ->
@@ -537,16 +565,16 @@ module Drawing =
 // Event handling
 // ------------------------------------------------------------------------------------------------
 
-module Events = 
+module Events =
   open Scales
   open Projections
 
   type MouseEventKind = Click | Move | Up | Down
-  type TouchEventKind = Move | Start 
+  type TouchEventKind = Move | Start
 
-  type InteractiveEvent<[<Measure>] 'vx, [<Measure>] 'vy> = 
-    | MouseEvent of MouseEventKind * (Value<'vx> * Value<'vy>)    
-    | TouchEvent of TouchEventKind * (Value<'vx> * Value<'vy>)    
+  type InteractiveEvent<[<Measure>] 'vx, [<Measure>] 'vy> =
+    | MouseEvent of MouseEventKind * (Value<'vx> * Value<'vy>)
+    | TouchEvent of TouchEventKind * (Value<'vx> * Value<'vy>)
     | TouchEnd
     | MouseLeave
 
@@ -559,7 +587,7 @@ module Events =
     | TouchEnd -> TouchEnd
     | MouseLeave -> MouseLeave
 
-  let inScale s v = 
+  let inScale s v =
     match s, v with
     | Continuous(CO l, CO h), COV(CO v) -> v >= min l h && v <= max l h
     | Categorical(cats), CAR(v, _) -> cats |> Seq.exists ((=) v)
@@ -570,85 +598,86 @@ module Events =
     match event with
     | MouseLeave -> true
     | TouchEnd -> true
-    | MouseEvent(_, (x, y)) 
+    | MouseEvent(_, (x, y))
     | TouchEvent(_, (x, y)) -> inScale sx x && inScale sy y
 
-  let rec triggerEvent<[<Measure>] 'ux, [<Measure>] 'uy> 
-      ((x1, y1, x2, y2) as area) ((sx, sy) as scales) (shape:ScaledShape<'ux, 'uy>) 
-      (jse:Event) (event:InteractiveEvent<1,1>) = 
+  let rec triggerEvent<[<Measure>] 'ux, [<Measure>] 'uy>
+      ((x1, y1, x2, y2) as area) ((sx, sy) as scales) (shape:ScaledShape<'ux, 'uy>)
+      (event:InteractiveEvent<1,1>)
+      (jse:Event) =
     match shape with
     | ScaledLine _
     | ScaledText _
     | ScaledBubble _
     | ScaledShape _ -> ()
-    | ScaledStyle(_, shape) -> triggerEvent area scales shape jse event
+    | ScaledStyle(_, shape) -> triggerEvent area scales shape event jse
     | ScaledOffset((dx, dy), shape) ->
-        triggerEvent (x1 + dx, y1 + dy, x2 + dx, y2 + dy) scales shape jse event
-    | ScaledNestX(p1, p2, isx, shape) -> 
+        triggerEvent (x1 + dx, y1 + dy, x2 + dx, y2 + dy) scales shape event jse
+    | ScaledNestX(p1, p2, isx, shape) ->
         let x1' = projectOneX (x1, x2) sx p1
-        let x2' = projectOneX (x1, x2) sx p2        
+        let x2' = projectOneX (x1, x2) sx p2
         //let x1', x2' = if x2 < x1 then max x1' x2', min x1' x2' else min x1' x2', max x1' x2'
-        triggerEvent (x1', y1, x2', y2) (isx, sy) shape jse event
+        triggerEvent (x1', y1, x2', y2) (isx, sy) shape event jse
 
-    | ScaledNestY(p1, p2, isy, shape) -> 
+    | ScaledNestY(p1, p2, isy, shape) ->
         let y1' = projectOneY (y1, y2) sy p1
         let y2' = projectOneY (y1, y2) sy p2
-        //let y1', y2' = if y2 < y1 then  min y1' y2', max y1' y2' else max y1' y2', min y1' y2' 
-        triggerEvent (x1, y1', x2, y2') (sx, isy) shape jse event
+        //let y1', y2' = if y2 < y1 then  min y1' y2', max y1' y2' else max y1' y2', min y1' y2'
+        triggerEvent (x1, y1', x2, y2') (sx, isy) shape event jse
     | ScaledPadding((t, r, b, l), isx, isy, shape) ->
         let calculateNestedRange rev (v1, v2) ins outs =
-          match ins with 
-          | Continuous(CO l, CO h) -> 
-              let pos = 
+          match ins with
+          | Continuous(CO l, CO h) ->
+              let pos =
                 [ projectOne rev (v1, v2) outs (COV (CO l))
                   projectOne rev (v1, v2) outs (COV (CO h)) ]
               Seq.min pos, Seq.max pos
-          | Categorical(vals) ->              
-              let pos = vals |> Seq.collect (fun v -> 
+          | Categorical(vals) ->
+              let pos = vals |> Seq.collect (fun v ->
                 [ projectOne rev (v1, v2) outs (CAR(v, 0.0))
                   projectOne rev (v1, v2) outs (CAR(v, 1.0)) ])
               Seq.min pos, Seq.max pos
           //|> fun rs -> printfn "calculateNestedRange %A %A %A = %A" (v1, v2) ins outs rs; rs
-          
+
         let x1', x2' = calculateNestedRange false (x1, x2) isx sx
         let y1', y2' = calculateNestedRange true (y1, y2) isy sy
         //printfn "PADDING: %A\nAXES: %A\nAREA: %A\nNEW AREA: %A\nAFTER PAD: %A\n\n" (t, r, b, l) (isx, isy)  area (x1', y1', x2', y2') (x1' + l, y1' + t, x2' - r, y2' - b)
-        triggerEvent (x1' + l, y1' + t, x2' - r, y2' - b) (isx, isy) shape jse event
+        triggerEvent (x1' + l, y1' + t, x2' - r, y2' - b) (isx, isy) shape event jse
 
-    | ScaledLayered shapes -> for shape in shapes do triggerEvent area scales shape jse event
+    | ScaledLayered shapes -> for shape in shapes do triggerEvent area scales shape event jse
     | ScaledInteractive(handlers, sx, sy, shape) ->
         let localEvent = projectEvent area scales event
-        if inScales scales localEvent then 
-          for handler in handlers do 
+        if inScales scales localEvent then
+          for handler in handlers do
             match localEvent, handler with
-            | MouseEvent(MouseEventKind.Click, pt), EventHandler.Click(f) 
-            | MouseEvent(MouseEventKind.Move, pt), MouseMove(f) 
-            | MouseEvent(MouseEventKind.Up, pt), MouseUp(f) 
-            | MouseEvent(MouseEventKind.Down, pt), MouseDown(f) -> 
+            | MouseEvent(MouseEventKind.Click, pt), EventHandler.Click(f)
+            | MouseEvent(MouseEventKind.Move, pt), MouseMove(f)
+            | MouseEvent(MouseEventKind.Up, pt), MouseUp(f)
+            | MouseEvent(MouseEventKind.Down, pt), MouseDown(f) ->
                 if jse <> null then jse.preventDefault()
-                f (unbox jse) pt
-            | TouchEvent(TouchEventKind.Move, pt), TouchMove(f) 
+                f (jse :?> MouseEvent) pt
+            | TouchEvent(TouchEventKind.Move, pt), TouchMove(f)
             | TouchEvent(TouchEventKind.Start, pt), TouchStart(f) ->
                 if jse <> null then jse.preventDefault()
-                f (unbox jse) pt
-            | TouchEnd, EventHandler.TouchEnd f -> f (unbox jse) 
-            | MouseLeave, EventHandler.MouseLeave f -> f (unbox jse) 
-            | MouseLeave, _ 
+                f (jse :?> TouchEvent) pt
+            | TouchEnd, EventHandler.TouchEnd f -> f (jse :?> TouchEvent)
+            | MouseLeave, EventHandler.MouseLeave f -> f (jse :?> MouseEvent)
+            | MouseLeave, _
             | TouchEnd, _
-            | TouchEvent(_, _), _  
+            | TouchEvent(_, _), _
             | MouseEvent(_, _), _  -> ()
-        triggerEvent area scales shape jse event
+        triggerEvent area scales shape event jse
 
 
 // ------------------------------------------------------------------------------------------------
 // Derived
 // ------------------------------------------------------------------------------------------------
 
-module Derived = 
-  let StrokeColor(clr, s) = 
+module Derived =
+  let StrokeColor(clr, s) =
     Shape.Style((fun s -> { s with StrokeColor = (1.0, HTML clr) }), s)
 
-  let FillColor(clr, s) = 
+  let FillColor(clr, s) =
     Shape.Style((fun s -> { s with Fill = Solid(1.0, HTML clr) }), s)
 
   let Font(font, clr, s) =
@@ -683,7 +712,7 @@ module Derived =
     yield COV x, CAR(y, 1.0)
     yield COV (CO 0.0), CAR(y, 1.0)
     yield COV (CO 0.0), CAR(y, 0.0) }
-    
+
   let Column(x, y) : Shape<1, 1> = Shape <| seq {
     yield CAR(x, 0.0), COV y
     yield CAR(x, 1.0), COV y
@@ -694,7 +723,7 @@ module Derived =
 // integration
 // ------------------------------------------------------------------------------------------------
 
-module Compost = 
+module Compost =
   open Scales
   open Svg
   open Drawing
@@ -703,93 +732,97 @@ module Compost =
   let niceNumber num decs =
     let str = string num
     let dot = str.IndexOf('.')
-    let before, after = 
+    let before, after =
       if dot = -1 then str, ""
       else str.Substring(0, dot), str.Substring(dot + 1, min decs (str.Length - dot - 1))
-    let after = 
+    let after =
       if after.Length < decs then after + System.String [| for i in 1 .. (decs - after.Length) -> '0' |]
-      else after 
+      else after
     let mutable res = before
     if before.Length > 5 then
       for i in before.Length-1 .. -1 .. 0 do
         let j = before.Length - i
         if i <> 0 && j % 3 = 0 then res <- res.Insert(i, ",")
     if Seq.forall ((=) '0') after then res
-    else res + "." + after    
+    else res + "." + after
 
-  let defaultFormat scale value = 
+  let defaultFormat scale value =
     match value with
     | CAR(CA s, _) -> s
     | COV(CO v) ->
-        let dec = 
+        let dec =
           match scale with
-          | Continuous(CO l, CO h) -> decimalPoints (unbox l, unbox h)
+          | Continuous(CO l, CO h) -> decimalPoints (l, h)
           | _ -> 0.
-        niceNumber (System.Math.Round(unbox<float> v, int dec)) (int dec)    
+        niceNumber (System.Math.Round(v, int dec)) (int dec)
 
-  let defstyle = 
+  let defstyle =
     { Fill = Solid(1.0, RGB(196, 196, 196))
       StrokeColor = (1.0, RGB(256, 0, 0))
       StrokeDashArray = []
       StrokeWidth = Pixels 2
-      Animation = None 
+      Animation = None
       Cursor = "default"
       Font = "10pt sans-serif"
       FormatAxisXLabel = defaultFormat
       FormatAxisYLabel = defaultFormat }
 
   let getRelativeLocation el x y =
-    let rec getOffset (parent:HTMLElement) (x, y) = 
+    let rec getOffset (parent:HTMLElement) (x, y) =
       if parent = null then (x, y)
-      else getOffset (unbox parent.offsetParent) (x-parent.offsetLeft, y-parent.offsetTop)
-    let rec getParent (parent:HTMLElement) = 
+      else getOffset (parent.offsetParent :?> HTMLElement) (x-parent.offsetLeft, y-parent.offsetTop)
+    let rec getParent (parent:HTMLElement) =
       // Safari: Skip over all the elements nested inside <svg> as they are weird
       // IE: Use parentNode when parentElement is not available (inside <svg>?)
       if parent.namespaceURI = "http://www.w3.org/2000/svg" && parent.tagName <> "svg" then
-        if parent.parentElement <> null then getParent parent.parentElement
-        else getParent (unbox parent.parentNode)
-      elif parent.offsetParent <> null then parent 
-      elif parent.parentElement <> null then getParent parent.parentElement
-      else getParent (unbox parent.parentNode)
+        if not(isNull parent.parentElement) then getParent parent.parentElement
+        else getParent (parent.parentNode :?> HTMLElement)
+      elif not(isNull parent.offsetParent) then parent
+      elif not(isNull parent.parentElement) then getParent parent.parentElement
+      else getParent (parent.parentNode :?> HTMLElement)
     getOffset (getParent el) (x, y)
 
-  let createSvg revX revY (width, height) viz = 
+  let createSvg (width, height) viz =
     let (sx, sy), shape = calculateScales defstyle viz
 
     let defs = ResizeArray<_>()
     let area = (0.0, 0.0, width, height)
     let svg = drawShape { Definitions = defs; Style = defstyle } area (sx, sy) shape
 
-    let triggerEvent (e:Event) = triggerEvent area (sx, sy) shape e
+    let triggerEvent e = triggerEvent area (sx, sy) shape e
 
-    let mouseHandler kind el (evt:Event) =
+    let mouseHandler kind (evt:Event) =
       let evt = evt :?> MouseEvent
-      let x, y = getRelativeLocation el evt.pageX evt.pageY
-      triggerEvent evt (MouseEvent(kind, (COV(CO x), COV(CO y))))
+      let x, y = getRelativeLocation (evt.target :?> HTMLElement) evt.pageX evt.pageY
+      triggerEvent (MouseEvent(kind, (COV(CO x), COV(CO y)))) evt
 
-    let touchHandler kind el (evt:Event) =
+    let touchHandler kind (evt:Event) =
       let evt = evt :?> TouchEvent
       let touch = evt.touches.[0]
-      let x, y = getRelativeLocation el touch.pageX touch.pageY
-      triggerEvent evt (TouchEvent(kind, (COV(CO x), COV(CO y))))
+      let x, y = getRelativeLocation (evt.target :?> HTMLElement) touch.pageX touch.pageY
+      triggerEvent (TouchEvent(kind, (COV(CO x), COV(CO y)))) evt
 
+    let renderCtx = { Definitions = defs }
+    let body = renderSvg renderCtx svg
 
-    h?div [] [ 
-      s?svg [
-          "style"=>"overflow:visible"
-          "width"=>string (int width); "height"=> string(int height); 
-          "click" =!> mouseHandler MouseEventKind.Click
-          "mousemove" =!> mouseHandler MouseEventKind.Move
-          "mousedown" =!> mouseHandler MouseEventKind.Down
-          "mouseup" =!> mouseHandler MouseEventKind.Up
-          "mouseleave" =!> fun _ evt -> triggerEvent evt MouseLeave
-          "touchmove" =!> touchHandler TouchEventKind.Move
-          "touchstart" =!> touchHandler TouchEventKind.Start
-          "touchend" =!> fun _ evt -> triggerEvent evt TouchEnd
-        ] [
-          let renderCtx = { Definitions = defs }
-          let body = renderSvg renderCtx svg |> Array.ofSeq
-          yield! defs
-          yield! body
-        ]
+    h "div" [
+      children [
+        s "svg" [
+            style "overflow:visible"
+            "width" => width
+            "height" => height
+            "onClick" =!> mouseHandler MouseEventKind.Click
+            "onMouseMove" =!> mouseHandler MouseEventKind.Move
+            "onMouseDown" =!> mouseHandler MouseEventKind.Down
+            "onMouseUp" =!> mouseHandler MouseEventKind.Up
+            "onMouseLeave" =!> triggerEvent MouseLeave
+            "onTouchMove" =!> touchHandler TouchEventKind.Move
+            "onTouchStart" =!> touchHandler TouchEventKind.Start
+            "onTouchEnd" =!> triggerEvent TouchEnd
+            children [
+              yield! defs
+              yield! body
+            ]
+          ]
+      ]
     ]

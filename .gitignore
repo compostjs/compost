@@ -1,4 +1,5 @@
 .ionide
+.vs
 node_modules/
 src/compost/obj/
 src/compost/bin/

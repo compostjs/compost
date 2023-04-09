@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
   <style> 
     .youguess button {
@@ -28,22 +29,7 @@
   </style>
 </head>
 <body style="background:#ffffff">
-  <h1>DEMO #1</h1>
-  <div id="out1" style="margin-left:100px;width:400px;height:300px;"></div>
-
-  <h1>DEMO #2</h1>
-  <div id="out2" style="margin-left:100px;width:400px;height:300px;"></div>
-
-  <h1>DEMO #3</h1>
-  <div id="out3" style="margin-left:100px;width:600px;height:400px;"></div>
-
-  <h1>DEMO #4</h1>
-  <div id="out4" style="margin-left:100px;width:600px;height:400px;"></div>
-
-  <h1>DEMO #5</h1>
-  <div id="out5" style="margin-left:100px"></div>
-
-  <br /><br /><br /><br /><br /><br /><br />
-  <script src="bundle.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/app/main.tsx"></script>
 </body>
 </html>
