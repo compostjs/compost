@@ -1,4 +1,4 @@
-import { CompostShape, compost as c, scale as s } from "../dist/core"
+import { CompostShape, compost as c, scale as s } from "../dist/compost"
 import * as data from "../src/project/data"
 
 // Calculate bins of a histogram. The function splits the data into 10
