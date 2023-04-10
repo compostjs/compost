@@ -1,7 +1,113 @@
-﻿namespace Compost
+﻿module rec Compost
 
+open Fable.Core
 open Compost.Html
 open Browser.Types
+
+// ------------------------------------------------------------------------------------------------
+// Api
+// ------------------------------------------------------------------------------------------------
+
+type Coord = U2<float, obj * float>
+type Point = Coord * Coord
+
+type Handlers =
+  abstract mousedown: (Coord -> Coord -> MouseEvent -> unit) option
+  abstract mouseup: (Coord -> Coord -> MouseEvent -> unit) option
+  abstract mousemove: (Coord -> Coord -> MouseEvent -> unit) option
+  abstract mouseleave: (MouseEvent -> unit) option
+  abstract touchstart: (Coord -> Coord -> TouchEvent -> unit) option
+  abstract touchmove: (Coord -> Coord -> TouchEvent -> unit) option
+  abstract touchend: (TouchEvent -> unit) option
+  abstract click: (Coord -> Coord -> MouseEvent -> unit) option
+
+let private formatValue (v: Value<'v>): Coord = 
+  match v with 
+  | COV(CO v) -> U2.Case1(float v)
+  | CAR(CA c, r) -> U2.Case2(c, r)
+
+let private parseValue (v: Coord): Value<'v> =
+  match v with
+  | U2.Case1 v -> COV(CO(LanguagePrimitives.FloatWithMeasure v))
+  | U2.Case2 (a1, a2) -> CAR(CA(string a1), a2)
+
+type CompostShape =
+  abstract nestX : low: Coord * high: Coord -> CompostShape
+  abstract nestY : low: Coord * high: Coord -> CompostShape
+  abstract nest : lowX: Coord * highX: Coord * lowY: Coord * highY: Coord -> CompostShape
+  abstract scaleX : scale: Scale<1> -> CompostShape
+  abstract scaleY : scale: Scale<1> -> CompostShape
+  abstract scale : scaleX: Scale<1> * scaleY: Scale<1> -> CompostShape
+  abstract fillColor : color: string -> CompostShape
+  abstract strokeColor : color: string -> CompostShape
+  abstract font : font: string * color: string -> CompostShape
+  abstract padding : top: float * right: float * bottom: float * left: float -> CompostShape
+  abstract on : handlers: Handlers -> CompostShape
+  [<NamedParams>] abstract axes : ?top: bool * ?right: bool * ?bottom: bool * ?left: bool -> CompostShape
+  abstract svg : width: float * height: float -> Compost.Html.DomNode
+
+type JsScale = 
+  abstract continuous : float * float -> Scale<1>
+  abstract categorical : string seq -> Scale<1>
+
+type JsCompost =
+  abstract nestX : Coord * Coord * CompostShape -> CompostShape
+  abstract nestY : Coord * Coord * CompostShape -> CompostShape
+  abstract nest : Coord * Coord * Coord * Coord * CompostShape -> CompostShape
+  abstract scaleX : Scale<1> * CompostShape -> CompostShape
+  abstract scaleY : Scale<1> * CompostShape -> CompostShape
+  abstract scale : Scale<1> * Scale<1> * CompostShape -> CompostShape
+  abstract overlay : CompostShape seq -> CompostShape
+  abstract fillColor : string * CompostShape -> CompostShape
+  abstract strokeColor : string * CompostShape -> CompostShape
+  abstract font : string * string * CompostShape -> CompostShape
+  abstract padding : float * float * float * float * CompostShape -> CompostShape
+  abstract text : x: Coord * y: Coord * text: string * ?alignment: string * ?rotation: float -> CompostShape
+  abstract column : string * float -> CompostShape
+  abstract bar : float * string -> CompostShape
+  abstract bubble : Coord * Coord * float * float -> CompostShape
+  abstract shape : Point[] -> CompostShape
+  abstract line : Point[] -> CompostShape
+  abstract on : Handlers * CompostShape -> CompostShape
+  abstract axes : string * CompostShape -> CompostShape
+  abstract svg : float * float * CompostShape -> Compost.Html.DomNode
+
+let scale = 
+  { new JsScale with 
+      member _.continuous(lo, hi) = Continuous(CO lo, CO hi) 
+      member _.categorical(cats) = Categorical [| for c in cats -> CA c |] }
+
+let compost = 
+  { new JsCompost with
+      member _.overlay(sh) =
+      
+        Shape.Layered(Seq.cast<Shape<1,1>> sh |> Seq.toList) :> CompostShape
+      member _.column(xp, yp) = Derived.Column(CA xp, CO yp)
+      member _.bar(xp, yp) = Derived.Bar(CO xp, CA yp)
+      member _.bubble(xp, yp, w, h) = Shape.Bubble(parseValue xp, parseValue yp, w, h)
+      member _.text(xp, yp, t, s, r) = 
+        let r = defaultArg r 0.0
+        let s = defaultArg s ""
+        let va = if s.Contains("baseline") then Baseline elif s.Contains("hanging") then Hanging else Middle
+        let ha = if s.Contains("start") then Start elif s.Contains("end") then End else Center
+        Shape.Text(parseValue xp, parseValue yp, va, ha, r, t)
+      member _.shape(a) = Shape.Shape [ for (p1, p2) in a -> parseValue p1, parseValue p2 ] 
+      member _.line(a) = Shape.Line [ for (p1, p2) in a -> parseValue p1, parseValue p2 ] 
+
+      member _.scaleX(sc, sh) = sh.scaleX(sc)
+      member _.scaleY(sc, sh) = sh.scaleY(sc)
+      member _.scale(sx, sy, sh) = sh.scale(sx, sy)
+      member _.nestX(lx, hx, sh) = sh.nestX(lx, hx)
+      member _.nestY(ly, hy, sh) = sh.nestY(ly, hy)
+      member _.nest(lx, hx, ly, hy, sh) = sh.nest(lx, hx, ly, hy) 
+      member _.padding(t, r, b, l, sh) = sh.padding((t, r, b, l))
+      member _.fillColor(c, sh) = sh.fillColor(c)
+      member _.strokeColor(c, sh) = sh.strokeColor(c)
+      member _.font(f, c, sh) = sh.font(f, c)
+      member _.axes(a, sh) = sh.axes(top=a.Contains("top"), right=a.Contains("right"), bottom=a.Contains("bottom"), left=a.Contains("left"))
+      member _.on(h, sh) = sh.on(h)
+      member _.svg(w, h, sh) = sh.svg(w, h)
+  }
 
 // ------------------------------------------------------------------------------------------------
 // Domain that users see
@@ -47,6 +153,11 @@ type Scale<[<Measure>] 'v> =
       | Continuous(CO lo, CO hi) -> Continuous(CO(float lo * 1.<1>), CO(float hi * 1.<1>))
       | Categorical(vals) -> vals |> Array.map (fun (CA s) -> CA s) |> Categorical
 
+  static member OfUnit(s: Scale<1>): Scale<'u> =
+      match s with
+      | Continuous(CO lo, CO hi) -> Continuous(CO(LanguagePrimitives.FloatWithMeasure lo), CO(LanguagePrimitives.FloatWithMeasure hi))
+      | Categorical(vals) -> vals |> Array.map (fun (CA s) -> CA s) |> Categorical
+
 type Style =
   { StrokeColor : AlphaColor
     StrokeWidth : Width
@@ -88,6 +199,31 @@ type Shape<[<Measure>] 'vx, [<Measure>] 'vy> =
   | Interactive of seq<EventHandler<'vx, 'vy>> * Shape<'vx, 'vy>
   | Padding of (float * float * float * float) * Shape<'vx, 'vy>
   | Offset of (float * float) * Shape<'vx, 'vy>
+
+  interface CompostShape with
+    member sh.scaleX(sc) = Shape.InnerScale(Some(Scale<'vx>.OfUnit sc), None, sh) 
+    member sh.scaleY(sc) = Shape.InnerScale(None, Some(Scale<'vy>.OfUnit sc), sh) 
+    member sh.scale(sx, sy) = Shape.InnerScale(Some(Scale<'vx>.OfUnit sx), Some(Scale<'vy>.OfUnit sy), sh) 
+    member s.nestX(lx, hx) = Shape.NestX(parseValue lx, parseValue hx, s)
+    member s.nestY(ly, hy) = Shape.NestY(parseValue ly, parseValue hy, s)
+    member s.nest(lx, hx, ly, hy) = Shape.NestY(parseValue ly, parseValue hy, Shape.NestX(parseValue lx, parseValue hx, s))
+    member s.padding(t, r, b, l) = Shape.Padding((t, r, b, l), s)
+    member s.fillColor(c) = Derived.FillColor(c, s) 
+    member s.strokeColor(c) = Derived.StrokeColor(c, s) 
+    member s.font(f, c) = Derived.Font(f, c, s) 
+    member s.axes(top, right, bottom, left) = Shape.Axes(defaultArg top false, defaultArg right false, defaultArg bottom false, defaultArg left false, s)
+    member s.on(h: Handlers) =
+      Shape.Interactive([
+        match h.mousedown with None -> () | Some f -> yield MouseDown(fun me (x, y) -> f (formatValue x) (formatValue y) me)
+        match h.mouseup with None -> () | Some f -> yield MouseUp(fun me (x, y) -> f (formatValue x) (formatValue y) me)
+        match h.mousemove with None -> () | Some f -> yield MouseMove(fun me (x, y) -> f (formatValue x) (formatValue y) me)
+        match h.mouseleave with None -> () | Some f -> yield MouseLeave(f)
+        match h.touchstart with None -> () | Some f -> yield TouchStart(fun me (x, y) -> f (formatValue x) (formatValue y) me)
+        match h.touchmove with None -> () | Some f -> yield TouchMove(fun me (x, y) -> f (formatValue x) (formatValue y) me)
+        match h.touchend with None -> () | Some f -> yield TouchEnd(f)
+        match h.click with None -> () | Some f -> yield Click(fun me (x, y) -> f (formatValue x) (formatValue y) me)
+      ], s)
+    member shape.svg(w, h) = Compost.createSvg (w, h) shape
 
 // ------------------------------------------------------------------------------------------------
 // SVG stuff
@@ -707,7 +843,7 @@ module Derived =
     yield COV (CO offs), lastY
     yield COV (CO offs), firstY }
 
-  let Bar(x, y) = Shape <| seq {
+  let Bar(x, y) : Shape<1, 1> = Shape <| seq {
     yield COV x, CAR(y, 0.0)
     yield COV x, CAR(y, 1.0)
     yield COV (CO 0.0), CAR(y, 1.0)

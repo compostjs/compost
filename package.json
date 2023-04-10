@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "dotnet tool restore",
-    "start": "dotnet fable watch src/compost -o dist --lang ts --run vite",
+    "start": "dotnet fable watch src/compost -o dist --lang ts --noReflection --run vite",
     "_prepublish": "npm run standalone && git add . && git commit -m \"Update standalone release file in docs\" && npm run build",
     "release": "np --yolo --no-release-draft"
   },
