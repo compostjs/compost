@@ -3,5 +3,6 @@
 node_modules/
 src/compost/obj/
 src/compost/bin/
+src/compost-ts
 docs/_site
 dist/

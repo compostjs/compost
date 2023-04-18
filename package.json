@@ -5,10 +5,9 @@
   "author": "Tomas Petricek",
   "license": "MIT",
   "scripts": {
-    "postinstall": "dotnet tool restore",
-    "start": "dotnet fable watch src/compost -o dist --lang ts --noReflection --run vite",
-    "_prepublish": "npm run standalone && git add . && git commit -m \"Update standalone release file in docs\" && npm run build",
-    "release": "np --yolo --no-release-draft"
+    "fable": "dotnet fable src/compost -o src/compost-ts --lang ts --fableLib fable-library --noReflection",
+    "start": "npm run fable -- --watch --run vite",
+    "build": "npm run fable && tsc --outDir ./dist --declaration --noEmit false"
   },
   "repository": {
     "type": "git",
@@ -25,15 +24,15 @@
   "homepage": "https://compostjs.github.io",
   "main": "./dist/compost.js",
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "fable-library": "^0.1.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react": "^3.1.0",
     "typescript": "^4.9.3",
-    "vite": "^4.2.0",
-    "np": "^6.2.4"
+    "vite": "^4.2.1"
   }
 }

@@ -1,5 +1,6 @@
-import { CompostShape, compost as c, scale as s } from "../dist/compost"
-import * as data from "../src/project/data"
+import React from 'react'
+import { CompostShape, compost as c, scale as s } from "../compost-ts/compost"
+import * as data from "./data"
 
 // Calculate bins of a histogram. The function splits the data into 10
 // equally sized bins, counts the values in each bin and returns an array
