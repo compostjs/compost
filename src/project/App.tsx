@@ -82,9 +82,9 @@ function Demo3() {
 
 function App() {
   return (
-    <div className="App">
-      <Demo2 />
-      <Demo3 />
+    <div className="App" style={{ marginTop: 20 }}>
+      <div><Demo2 /></div>
+      <div><Demo3 /></div>
     </div>
   )
 }

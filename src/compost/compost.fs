@@ -1,8 +1,8 @@
 ﻿module rec Compost
 
 open Fable.Core
-open Compost.Html
 open Browser.Types
+open Html
 
 // ------------------------------------------------------------------------------------------------
 // Api
@@ -44,7 +44,7 @@ type CompostShape =
   abstract padding : top: float * right: float * bottom: float * left: float -> CompostShape
   abstract on : handlers: Handlers -> CompostShape
   [<NamedParams>] abstract axes : ?top: bool * ?right: bool * ?bottom: bool * ?left: bool -> CompostShape
-  abstract svg : width: float * height: float -> Compost.Html.DomNode
+  abstract svg : width: float * height: float -> DomNode
 
 type JsScale = 
   abstract continuous : float * float -> Scale<1>
@@ -70,7 +70,7 @@ type JsCompost =
   abstract line : Point[] -> CompostShape
   abstract on : Handlers * CompostShape -> CompostShape
   abstract axes : string * CompostShape -> CompostShape
-  abstract svg : float * float * CompostShape -> Compost.Html.DomNode
+  abstract svg : float * float * CompostShape -> DomNode
 
 let scale = 
   { new JsScale with 
@@ -269,7 +269,7 @@ module Svg =
     match svg with
     | Empty -> ()
     | Text((x,y), t, rotation, css) ->
-        s "text" [
+        h "text" [
             style css
             if rotation = 0.0 then
               "x" => x
@@ -285,7 +285,7 @@ module Svg =
         for s in ss do yield! renderSvg ctx s
 
     | Ellipse((cx, cy),(rx, ry), css) ->
-        s "ellipse" [
+        h "ellipse" [
             "cx" => cx
             "cy" => cy
             "rx" => rx
@@ -295,17 +295,17 @@ module Svg =
 
     | Rect((x1, y1),(x2, y2), css) ->
         let l, t = min x1 x2, min y1 y2
-        let w, h = abs (x1 - x2), abs (y1 - y2)
-        s "rect" [
+        let w, h' = abs (x1 - x2), abs (y1 - y2)
+        h "rect" [
             "x" => l
             "y" => t
             "width" => w
-            "height" => h
+            "height" => h'
             style css
         ]
 
     | Path(p, css) ->
-        s "path" [ "d" => formatPath p; style css ]
+        h "path" [ "d" => formatPath p; style css ]
   }
 
   let formatColor = function
@@ -338,11 +338,11 @@ module Svg =
     ( match style.Fill with
       | LinearGradient(points) ->
           let id = "gradient_" + System.Guid.NewGuid().ToString().Replace("-", "")
-          s "linearGradient" [
+          h "linearGradient" [
             "id"=>id
             children [
               for pt, (o, clr) in points ->
-                s "stop" ["offset" => $"{pt}%%"; "stop-color" => formatColor clr; "stop-opacity" => o ]
+                h "stop" ["offset" => $"{pt}%%"; "stop-color" => formatColor clr; "stop-opacity" => o ]
               ]
           ]
           |> defs.Add
@@ -941,24 +941,21 @@ module Compost =
     let renderCtx = { Definitions = defs }
     let body = renderSvg renderCtx svg
 
-    h "div" [
-      children [
-        s "svg" [
-            style "overflow:visible"
-            "width" => width
-            "height" => height
-            "onClick" =!> mouseHandler MouseEventKind.Click
-            "onMouseMove" =!> mouseHandler MouseEventKind.Move
-            "onMouseDown" =!> mouseHandler MouseEventKind.Down
-            "onMouseUp" =!> mouseHandler MouseEventKind.Up
-            "onMouseLeave" =!> triggerEvent MouseLeave
-            "onTouchMove" =!> touchHandler TouchEventKind.Move
-            "onTouchStart" =!> touchHandler TouchEventKind.Start
-            "onTouchEnd" =!> triggerEvent TouchEnd
-            children [
-              yield! defs
-              yield! body
-            ]
-          ]
+    s [
+        style "overflow:visible"
+        "width" => width
+        "height" => height
+        "onClick" =!> mouseHandler MouseEventKind.Click
+        "onMouseMove" =!> mouseHandler MouseEventKind.Move
+        "onMouseDown" =!> mouseHandler MouseEventKind.Down
+        "onMouseUp" =!> mouseHandler MouseEventKind.Up
+        "onMouseLeave" =!> triggerEvent MouseLeave
+        "onTouchMove" =!> touchHandler TouchEventKind.Move
+        "onTouchStart" =!> touchHandler TouchEventKind.Start
+        "onTouchEnd" =!> triggerEvent TouchEnd
+        children [
+          yield! defs
+          yield! body
+        ]
       ]
-    ]
+

@@ -1,6 +1,8 @@
 .ionide
 .vs
 node_modules/
+src/dotnet/obj/
+src/dotnet/bin/
 src/compost/obj/
 src/compost/bin/
 src/compost-ts
