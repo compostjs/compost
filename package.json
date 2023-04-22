@@ -24,7 +24,7 @@
   "homepage": "https://compostjs.github.io",
   "main": "./dist/compost.js",
   "dependencies": {
-    "fable-library": "^0.1.0",
+    "fable-library": "^1.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
