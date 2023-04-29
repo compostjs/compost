@@ -1,8 +1,11 @@
 .ionide
-docs
-public
-src
+.vs
+.config
+node_modules/
+src/
+docs/
+public/
 compost.gif
 Nuget.config
-webpack.config.js
-node_modules
+ts.config.json
+vite.config.ts
