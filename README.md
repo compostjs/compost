@@ -21,6 +21,7 @@ To work on Compost, you can use the WebPack dev server. The following will serve
 http://localhost:8080
 
 ```
+npm install
 npm start
 ```
 
