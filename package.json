@@ -1,6 +1,6 @@
 {
   "name": "compostjs",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "type": "module",
   "description": "Composable data visualization library for JavaScript",
   "author": "Tomas Petricek",
