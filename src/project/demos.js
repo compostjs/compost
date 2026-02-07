@@ -1,4 +1,4 @@
-import { scale as s, compost as c } from "../compost/compost.fs"
+import { scale as s, compost as c } from "../compost/compost.fs.js"
 import { elections, gbpusd, gbpeur, iris } from "./data.js"
 
 // Calculate bins of a histogram. The function splits the data into 10

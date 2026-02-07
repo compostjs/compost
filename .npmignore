@@ -4,5 +4,7 @@ public
 src
 compost.gif
 Nuget.config
-webpack.config.js
+vite.config.js
 node_modules
+.fable
+.config

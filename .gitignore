@@ -1,6 +1,9 @@
+.claude
 .ionide
 node_modules/
 src/compost/obj/
 src/compost/bin/
 docs/_site
 dist/
+.fable/
+src/compost/*.fs.js

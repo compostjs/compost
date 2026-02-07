@@ -21,8 +21,8 @@ module Helpers =
 
 open Helpers
 
-type Scale = Scale<1>
-type Shape = Shape<1, 1>
+type Scale = Compost.Scale<1>
+type Shape = Compost.Shape<1, 1>
 
 type JsScale = 
   abstract continuous : float * float -> Scale
