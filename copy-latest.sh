@@ -1,0 +1,1 @@
+cp docs/releases/compost-$(npm pkg get version | tr -d '"').js docs/releases/compost-latest.js
