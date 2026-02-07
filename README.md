@@ -16,8 +16,8 @@ using [the Fable compiler](https://fable.io). To build Compost, you will need to
 [Ionide plugin](http://ionide.io/) for Visual Studio Code.
 
 ### Developing Compost
-To work on Compost, you can use the WebPack dev server. The following will serve the
-`public/index.html` file and compile the `src/project/demos.js` source code at
+To work on Compost, you can use the Vite dev server. The following will serve the
+`index.html` file and compile the `src/project/demos.js` source code at
 http://localhost:8080
 
 ```
@@ -26,8 +26,8 @@ npm start
 ```
 
 ### Building Compost
-There are two ways to build Compost. Running `npm run build` will use `fable-splitter`
-to generate nice JavaScript files for a NPM package in the `dist` folder, which is then
+There are two ways to build Compost. Running `npm run build` will 
+generate nice JavaScript files for a NPM package in the `dist` folder, which is then
 packaged and published on NPM. Running `npm run standalone` builds a standalone
 JavaScript file that is added to the `releases` folder of the `docs` with the current
 version number in the filename (and also updates the `latest` file).

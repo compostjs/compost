@@ -9,8 +9,8 @@
     "start": "dotnet fable watch src/compost/compost.fsproj --run npx vite",
     "build": "dotnet fable src/compost/compost.fsproj -o dist && cp dist/compost.fs.js dist/compost.js",
     "standalone": "dotnet fable src/compost/compost.fsproj --run npx vite build && cp docs/releases/compost-$npm_package_version.js docs/releases/compost-latest.js",
-    "prepublish": "npm run standalone && git add . && git commit -m \"Update standalone release file in docs\" && npm run build",
-    "release": "np --yolo --no-release-draft --no-publish && npm publish"
+    "updatejs": "npm run standalone && git add . && git commit -m \"Update standalone release file in docs\" && npm run build",
+    "release": "np --yolo --no-release-draft --no-publish && npm run build && npm run updatejs && npm publish"
   },
   "repository": {
     "type": "git",
