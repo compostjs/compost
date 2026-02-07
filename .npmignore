@@ -1,10 +1,9 @@
-.ionide
-docs
-public
-src
+.claude/
+src/
+docs/
+.config/
 compost.gif
-Nuget.config
+copy-latest.sh
+index.html
+Nuget.Config
 vite.config.js
-node_modules
-.fable
-.config
