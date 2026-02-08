@@ -98,12 +98,13 @@ let s1 = [ [["Labour", 0], 0], [["Labour", 0], 152],
 
       <h2>Compost primitives: Basic shapes<a name="c-basic"></a></h2>
       <table class="docs">
-      <tr><th>c.text</th><td><code class="f">Coord * Coord * string * ?string * ?float -> Shape</code><p>Draws a text specified as the third parameter at a given x and y coordinates specified by the first two parameters. The last two optional parameters specify alignment (baseline, hanging, middle, start, end, center) and rotation in radians.</p></td></tr>
-      <tr><th>c.bubble</th><td><code class="f">Coord * Coord * float * float -> Shape</code><p>Creates a bubble (point) at a specified x and y coordinates. The last two parameters specify the width and height of the bubble in pixels.</p></td></tr>
-      <tr><th>c.shape</th><td><code class="f">Point[] -> Shape</code><p>Creates a filled shape. The shape is specified as an array of points (see the section on coordinates).</p></td></tr>
-      <tr><th>c.line</th><td><code class="f">Point[] -> Shape</code><p>Creates a line drawn using the current stroke color. The line is specified as an array of points (see the section on coordinates)</p></td></tr>
-      <tr><th>c.column</th><td><code class="f">string * float -> Shape</code><p>Creates a filled rectangle for use in a column chart. This is a shorthand for <code>c.shape</code>. It creates a rectangle that fills the whole area for a given categorical value and has a specified height.</p></td></tr>
-      <tr><th>c.bar</th><td><code class="f">float * string -> Shape</code><p>Creates a filled rectangle for use in a bar chart. This is a shorthand for <code>c.shape</code>. It creates a rectangle that fills the whole area for a given categorical value and has a specified width.</p></td></tr>
+        <tr><th>c.text</th><td><code class="f">Coord * Coord * string * ?string * ?float -> Shape</code><p>Draws a text specified as the third parameter at a given x and y coordinates specified by the first two parameters. The last two optional parameters specify alignment (baseline, hanging, middle, start, end, center) and rotation in radians.</p></td></tr>
+        <tr><th>c.bubble</th><td><code class="f">Coord * Coord * float * float -> Shape</code><p>Creates a bubble (point) at a specified x and y coordinates. The last two parameters specify the width and height of the bubble in pixels.</p></td></tr>
+        <tr><th>c.shape</th><td><code class="f">Point[] -> Shape</code><p>Creates a filled shape. The shape is specified as an array of points (see the section on coordinates).</p></td></tr>
+        <tr><th>c.line</th><td><code class="f">Point[] -> Shape</code><p>Creates a line drawn using the current stroke color. The line is specified as an array of points (see the section on coordinates)</p></td></tr>
+        <tr><th>c.column</th><td><code class="f">string * float -> Shape</code><p>Creates a filled rectangle for use in a column chart. This is a shorthand for <code>c.shape</code>. It creates a rectangle that fills the whole area for a given categorical value and has a specified height.</p></td></tr>
+        <tr><th>c.bar</th><td><code class="f">float * string -> Shape</code><p>Creates a filled rectangle for use in a bar chart. This is a shorthand for <code>c.shape</code>. It creates a rectangle that fills the whole area for a given categorical value and has a specified width.</p></td></tr>
+        <tr><th>c.image</th><td><code class="f">string * Point * Point -> Shape</code><p>Creates a shape representing an embedded image, pointing to a <code>href</code> specified by the first parameter that covers an area specified by the left upper corner and right bottom corner. By default, the image is scaled to fit, but preserves the aspect ratio. Use <code>c.preserveAspectRatio</code> to specify scaling behaviour.</p></td></tr>
       </table>
 
       <h2>Compost primitives: Specifying visual properties<a name="c-visual"></a></h2>
@@ -111,6 +112,7 @@ let s1 = [ [["Labour", 0], 0], [["Labour", 0], 152],
       <tr><th>c.fillColor</th><td><code class="f">string * Shape -> Shape</code><p>Sets the fill color to be used for all shapes drawn using <code>c.shape</code> in the given shape.</p></td></tr>
       <tr><th>c.strokeColor</th><td><code class="f">string * Shape -> Shape</code><p>Sets the line color to be used for all lines drawn using <code>c.line</code> in the given shape.</p></td></tr>
       <tr><th>c.font</th><td><code class="f">string * string * Shape -> Shape</code><p>Sets the font and text color to be used for all text occurring in the given shape.</p></td></tr>
+      <tr><th>c.preserveAspectRatio</th><td><code class="f">string * Shape -> Shape</code><p>Sets the scaling behaviour for all images occurring in the given shape. Values are those of the <a href="https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio">corresponding SVG attribute</a>.</p></td></tr>
       </table>
 
       <h2>Compost primitives: Transforming scales<a name="c-scale"></a></h2>
@@ -171,12 +173,5 @@ let s1 = [ [["Labour", 0], 0], [["Labour", 0], 152],
   </section>
   <script src="releases/compost-latest.js"></script>
   <script src="lib/docs.js"></script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-1561220-8"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'UA-1561220-8');
-  </script>
 </body>
 </html>

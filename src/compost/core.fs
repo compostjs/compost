@@ -45,6 +45,7 @@ type Style =
     Animation : option<int * string * (Style -> Style)>
     Font : string
     Cursor : string
+    PreserveAspectRatio : string
     FormatAxisXLabel : Scale<1> -> Value<1> -> string
     FormatAxisYLabel : Scale<1> -> Value<1> -> string }
 
@@ -63,6 +64,7 @@ type Orientation =
   | Horizontal
 
 type Shape<[<Measure>] 'vx, [<Measure>] 'vy> = 
+  | Image of string * (Value<'vx> * Value<'vy>) * (Value<'vx> * Value<'vy>)
   | Style of (Style -> Style) * Shape<'vx, 'vy>
   | Text of Value<'vx> * Value<'vy> * VerticalAlign * HorizontalAlign * float * string
   | AutoScale of bool * bool * Shape<'vx, 'vy>
@@ -97,6 +99,7 @@ module Svg =
   type SvgStyle = string
   
   type Svg =
+    | Image of string * (float * float) * (float * float) * string
     | Path of PathSegment[] * SvgStyle
     | Ellipse of (float * float) * (float * float) * SvgStyle
     | Rect of (float * float) * (float * float) * SvgStyle
@@ -142,6 +145,13 @@ module Svg =
           [ "cx" => string cx; "cy" => string cy;
             "rx" => string rx; "ry" => string ry; "style" => style ]
         yield s?ellipse attrs []
+
+    | Image(href, (x, y), (w, h), preserveAspectRatio) ->
+        let attrs = 
+          [ "href" => href; "preserveAspectRatio" => preserveAspectRatio
+            "x" => string x; "y" => string y 
+            "width" => string w; "height" => string h ]
+        yield s?image attrs []
 
     | Rect((x1, y1),(x2, y2), style) ->
         let l, t = min x1 x2, min y1 y2
@@ -205,6 +215,7 @@ module Scales =
     | ScaledLine of (Value<'vx> * Value<'vy>)[]
     | ScaledBubble of Value<'vx> * Value<'vy> * float * float
     | ScaledShape of (Value<'vx> * Value<'vy>)[]
+    | ScaledImage of string * (Value<'vx> * Value<'vy>) * (Value<'vx> * Value<'vy>)
     | ScaledLayered of ScaledShape<'vx, 'vy>[]
     | ScaledInteractive of seq<EventHandler<'vx, 'vy>> * Scale<'vx> * Scale<'vy> * ScaledShape<'vx, 'vy>
     | ScaledPadding of (float * float * float * float) * Scale<'vx> * Scale<'vy> * ScaledShape<'vx, 'vy>
@@ -342,6 +353,10 @@ module Scales =
         let line = Seq.toArray line 
         let scales = calculateShapeScales line
         scales, ScaledLine(line)
+
+    | Image(href, pt1, pt2) -> 
+        let scales = calculateShapeScales [| pt1; pt2 |]
+        scales, ScaledImage(href, pt1, pt2)
 
     | Shape points -> 
         let points = Seq.toArray points
@@ -493,6 +508,11 @@ module Drawing =
              yield LineTo(project (points.[0])) |]
         Path(path, formatStyle ctx.Definitions (hideStroke ctx.Style)) 
 
+    | ScaledImage(href, pt1, pt2) ->
+        let x1, y1 = project pt1
+        let x2, y2 = project pt2
+        Image(href, (min x1 x2, min y1 y2), (abs(x2 - x1), abs(y2 - y1)), ctx.Style.PreserveAspectRatio)
+
     | ScaledPadding((t, r, b, l), isx, isy, shape) ->
         let calculateNestedRange rev (v1, v2) ins outs =
           match ins with 
@@ -579,6 +599,7 @@ module Events =
     match shape with
     | ScaledLine _
     | ScaledText _
+    | ScaledImage _ 
     | ScaledBubble _
     | ScaledShape _ -> ()
     | ScaledStyle(_, shape) -> triggerEvent area scales shape jse event
@@ -645,6 +666,9 @@ module Events =
 // ------------------------------------------------------------------------------------------------
 
 module Derived = 
+  let PreserveAspectRatio(pa, s) = 
+    Shape.Style((fun s -> { s with PreserveAspectRatio = pa }), s)
+
   let StrokeColor(clr, s) = 
     Shape.Style((fun s -> { s with StrokeColor = (1.0, HTML clr) }), s)
 
@@ -733,6 +757,7 @@ module Compost =
       StrokeDashArray = []
       StrokeWidth = Pixels 2
       Animation = None 
+      PreserveAspectRatio = ""
       Cursor = "default"
       Font = "10pt sans-serif"
       FormatAxisXLabel = defaultFormat

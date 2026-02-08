@@ -111,7 +111,29 @@ c.render("out3", title("Pairplot comparing sepal width, " +
   "petal length and petal width of irises", pairplot))
 
 // ----------------------------------------------------------------------------
-// DEMO #4: Interactive 'You Draw' chart that lets you resize bars
+// DEMO #4: More
+// ----------------------------------------------------------------------------
+
+let fruits = 
+  [ { kind:"apple", value:30, color:"#DC4B4A" },
+    { kind:"plums", value:20, color:"#424498" },
+    { kind:"kiwi", value:40, color:"#A0CB5B" },
+    { kind:"banana", value:35, color:"#FEEE61" } ]
+
+let fruitBars = 
+  c.preserveAspectRatio("", c.overlay(fruits.map(f => 
+    c.overlay([
+      c.padding(0, 10, 0, 10, c.fillColor(f.color, c.column(f.kind, f.value))),
+      c.image("/docs/img/" + f.kind + ".png", [[f.kind, 0.2], f.value], [[f.kind, 0.8], f.value+20])
+    ]) )))
+
+let fruitChart = 
+  title("Chart with images", c.axes("left bottom", fruitBars))
+  
+c.render("out4", fruitChart)
+
+// ----------------------------------------------------------------------------
+// DEMO #5: Interactive 'You Draw' chart that lets you resize bars
 // ----------------------------------------------------------------------------
 
 let partyColors = {}
@@ -144,10 +166,10 @@ function render1(trigger, state) {
 }
 
 let init1 = { enabled:false, values: elections.map(e => [e.party, e.y19]) }
-c.interactive("out4", init1, update1, render1)
+c.interactive("out5", init1, update1, render1)
 
 // ----------------------------------------------------------------------------
-// DEMO #5: Interactive 'You Draw' chart that lets you resize bars
+// DEMO #6: Interactive 'You Draw' chart that lets you resize bars
 // ----------------------------------------------------------------------------
 
 let data = 
@@ -217,4 +239,5 @@ function render(trigger, state) {
   ]);
 }
 
-c.interactive("out5", init, update, render) 
+c.interactive("out6", init, update, render) 
+

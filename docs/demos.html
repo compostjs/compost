@@ -44,6 +44,8 @@
         <li><a href="#uk-bar">UK elections: Basic bar chart</a></li>
         <li><a href="#uk-double">UK elections: Double bar chart</a></li>
         <li><a href="#uk-title">UK elections: Double bar chart with a title</a></li>
+        <li><a href="#fruit-overlay">Fruits: Drawing bars with images</a></li>
+        <li><a href="#fruit-add">Fruits: Adding images to a bar chart</a></li>
         <li><a href="#xchg-line">Exchange rates: Line chart with explicit scale</a></li>
         <li><a href="#xchg-back">Exchange rates: Line chart with highlighted background</a></li>
         <li><a href="#xchg-under">Exchange rates: Highlighting area under a line</a></li>
@@ -153,6 +155,61 @@ let bars =
 c.render("out1c", title("United Kingdom general elections (2017 vs 2019)", bars))
 </code></pre>
       <div id="out1c" class="compost-out" style="max-width:600px;height:250px"></div>
+
+      <h2>Fruits: Drawing bars with images<a name="fruit-overlay"></a></h2>
+      <p>You can easily use images in Compost charts. To do demonstrate this, we'll use
+        a dataset with information about the (imaginary) popularity of fruits.
+        For each fruit, we also have a corresponding image file at, for example,
+        <code>/img/kiwi.png</code>. We now create an image for each of the fruits
+        in our collection using <code>c.image</code>, giving it the image path
+        and two corners that determine its bounding rectangle. To make the image
+        scale, we use <code>c.preserveAspectRatio</code>. Here, we overlay the
+        image over the column.        
+      </p>
+<pre class="compost"><code class="lang-javascript">let fruits = 
+  [ { kind:"apple", value:30, color:"#DC4B4A" },
+    { kind:"plums", value:20, color:"#424498" },
+    { kind:"kiwi", value:40, color:"#A0CB5B" },
+    { kind:"banana", value:35, color:"#FEEE61" } ]
+
+let fruitBars = 
+  c.preserveAspectRatio("none", c.overlay(fruits.map(f => 
+      c.overlay([
+        c.fillColor(f.color + "50", 
+          c.column(f.kind, f.value)),
+        c.image("/img/" + f.kind + ".png", 
+          [[f.kind, 0], 0], [[f.kind, 1], f.value])
+      ])
+     )))
+
+c.render("outFa", c.axes("left bottom", fruitBars))
+</code></pre>
+      <div id="outFa" class="compost-out" style="max-width:600px;height:250px"></div>
+
+      <h2>Fruits: Adding images to a bar chart<a name="fruit-add"></a></h2>
+      <p>If we wanted the images above the columns, we can do this too by 
+        specifying a location for the image that is above the column.
+        (We have to specify this in domain values, so we need to guess what a
+        good distance would be, but if we do not set scaling, the images will look nice.)
+      </p>
+<pre class="compost"><code class="lang-javascript">let fruits = 
+  [ { kind:"apple", value:30, color:"#DC4B4A" },
+    { kind:"plums", value:20, color:"#424498" },
+    { kind:"kiwi", value:40, color:"#A0CB5B" },
+    { kind:"banana", value:35, color:"#FEEE61" } ]
+
+let fruitBars = 
+  c.preserveAspectRatio("", c.overlay(fruits.map(f => 
+    c.overlay([
+      c.padding(0, 10, 0, 10, 
+        c.fillColor(f.color, c.column(f.kind, f.value))),
+      c.image("/img/" + f.kind + ".png", 
+        [[f.kind, 0.2], f.value], [[f.kind, 0.8], f.value+20])
+    ]) )))
+
+c.render("outFb", c.axes("left bottom", fruitBars))
+</code></pre>
+      <div id="outFb" class="compost-out" style="max-width:600px;height:250px"></div>
 
 <h2>Exchange rates: Line chart with explicit scale<a name="xchg-line"></a></h2>
 <p>This demo creates a basic line chart showing GBP/USD exchange rate around 23 June 2016.
@@ -386,12 +443,5 @@ c.interactive("out4", init, update, render)
   </section>
   <script src="releases/compost-latest.js"></script>
   <script src="lib/docs.js"></script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-1561220-8"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'UA-1561220-8');
-  </script>
 </body>
 </html>

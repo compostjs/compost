@@ -37,12 +37,14 @@ type JsCompost =
   abstract scale : Scale * Scale * Shape -> Shape
   abstract overlay : Shape[] -> Shape
   abstract fillColor : string * Shape -> Shape
+  abstract preserveAspectRatio : string * Shape -> Shape
   abstract strokeColor : string * Shape -> Shape
   abstract font : string * string * Shape -> Shape
   abstract padding : float * float * float * float * Shape -> Shape
   abstract text : obj * obj * string * string * float -> Shape
   abstract column : string * float -> Shape
   abstract bar : float * string -> Shape
+  abstract image : string * obj[] * obj[] -> Shape
   abstract bubble : obj * obj * float * float -> Shape
   abstract shape : obj[][] -> Shape
   abstract line : obj[][] -> Shape
@@ -69,6 +71,7 @@ let compost =
       member x.overlay(sh) = Shape.Layered(List.ofArray sh) 
       member x.padding(t, r, b, l, s) = Shape.Padding((t, r, b, l), s)
       member x.fillColor(c, s) = Derived.FillColor(c, s) 
+      member x.preserveAspectRatio(pa, s) = Derived.PreserveAspectRatio(pa, s) 
       member x.strokeColor(c, s) = Derived.StrokeColor(c, s) 
       member x.font(f, c, s) = Derived.Font(f, c, s) 
       member x.column(xp, yp) = Derived.Column(CA xp, CO yp)
@@ -82,6 +85,8 @@ let compost =
         Shape.Text(parseValue xp, parseValue yp, va, ha, r, t)
       member x.shape(a) = Shape.Shape [ for p in a -> parseValue p.[0], parseValue p.[1] ] 
       member x.line(a) = Shape.Line [ for p in a -> parseValue p.[0], parseValue p.[1] ] 
+      member x.image(href, pt1, pt2) = 
+        Shape.Image(href, (parseValue pt1[0], parseValue pt1[1]), (parseValue pt2[0], parseValue pt2[1]))
       member x.axes(a, s) = Shape.Axes(a.Contains("top"), a.Contains("right"), a.Contains("bottom"), a.Contains("left"), s)
       member x.on(o, s) =
         Shape.Interactive
