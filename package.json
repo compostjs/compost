@@ -10,8 +10,10 @@
     "build": "dotnet fable src/compost/compost.fsproj -o dist && rm dist/fable_modules/.gitignore",
     "rebuild": "rm -rf dist && npm run build",
     "standalone": "dotnet fable src/compost/compost.fsproj --run npx vite build && sh copy-latest.sh",
-    "updatejs": "npm run standalone && git add . && git commit -m \"Update standalone release file in docs\"",
-    "release": "np --yolo --no-release-draft --no-publish && npm run updatejs && npm run rebuild && npm publish"
+    "release:version": "np --yolo --no-release-draft --no-publish",
+    "release:standalone": "npm run standalone && git add . && git commit -m \"Update standalone release file in docs\"",
+    "release:publish": "npm run rebuild && npm publish",
+    "release": "npm run release:version && npm run release:standalone && npm run release:publish"
   },
   "repository": {
     "type": "git",
