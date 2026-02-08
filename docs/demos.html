@@ -160,7 +160,7 @@ c.render("out1c", title("United Kingdom general elections (2017 vs 2019)", bars)
       <p>You can easily use images in Compost charts. To do demonstrate this, we'll use
         a dataset with information about the (imaginary) popularity of fruits.
         For each fruit, we also have a corresponding image file at, for example,
-        <code>/img/kiwi.png</code>. We now create an image for each of the fruits
+        <code>img/kiwi.png</code>. We now create an image for each of the fruits
         in our collection using <code>c.image</code>, giving it the image path
         and two corners that determine its bounding rectangle. To make the image
         scale, we use <code>c.preserveAspectRatio</code>. Here, we overlay the
@@ -177,7 +177,7 @@ let fruitBars =
       c.overlay([
         c.fillColor(f.color + "50", 
           c.column(f.kind, f.value)),
-        c.image("/img/" + f.kind + ".png", 
+        c.image("img/" + f.kind + ".png", 
           [[f.kind, 0], 0], [[f.kind, 1], f.value])
       ])
      )))
@@ -203,7 +203,7 @@ let fruitBars =
     c.overlay([
       c.padding(0, 10, 0, 10, 
         c.fillColor(f.color, c.column(f.kind, f.value))),
-      c.image("/img/" + f.kind + ".png", 
+      c.image("img/" + f.kind + ".png", 
         [[f.kind, 0.2], f.value], [[f.kind, 0.8], f.value+20])
     ]) )))
 
