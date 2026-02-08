@@ -2,6 +2,7 @@ module main
 
 open Compost
 open Compost.Html
+open Fable.Core.JsInterop
 open Browser
 
 module Helpers = 
@@ -54,6 +55,7 @@ type JsCompost =
   abstract svg : float * float * Shape -> DomNode
   abstract html : string * obj * DomNode[] -> DomNode
   abstract interactive<'e, 's> : string * 's * ('s -> 'e -> 's) * (('e -> unit) -> 's -> Shape) -> unit
+  abstract foldDom : (obj -> string -> obj -> obj) * obj * DomNode -> obj
 
 let scale = 
   { new JsScale with 
@@ -127,7 +129,11 @@ let compost =
           else 
             Compost.createSvg false false (el.clientWidth, el.clientHeight) res
         Html.createVirtualDomApp id init render update
-      member x.render(id, viz) = 
+      member x.render(id, viz) =
         let el = document.getElementById(id)
         let svg = Compost.createSvg false false (el.clientWidth, el.clientHeight) viz
-        svg |> Html.renderTo el }
+        svg |> Html.renderTo el
+      member x.foldDom(f, acc, node) =
+        let toAttrObj (attrs:(string * DomAttribute)[]) =
+          createObj [| for k, v in attrs do match v with Attribute s -> yield k, box s | _ -> () |]
+        Html.foldDom (fun acc _ns tag attrs -> f acc tag (toAttrObj attrs)) acc node }

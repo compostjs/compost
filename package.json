@@ -7,9 +7,10 @@
   "license": "MIT",
   "scripts": {
     "start": "dotnet fable watch src/compost/compost.fsproj --run npx vite",
-    "build": "dotnet fable src/compost/compost.fsproj -o dist && rm dist/fable_modules/.gitignore",
+    "build": "dotnet fable src/compost/compost.fsproj -o dist && rm -f dist/fable_modules/.gitignore",
     "rebuild": "rm -rf dist && npm run build",
     "standalone": "dotnet fable src/compost/compost.fsproj --run npx vite build && sh copy-latest.sh",
+    "test": "dotnet fable src/compost/compost.fsproj && npx vitest run",
     "release:version": "np --yolo --no-release-draft --no-publish",
     "release:standalone": "npm run standalone && git add . && git commit -m \"Update standalone release file in docs\"",
     "release:publish": "npm run rebuild && npm publish",
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "np": "^11.0.2",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^4.0.18"
   }
 }

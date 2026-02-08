@@ -14,10 +14,15 @@ npm start                    # Dev server at http://localhost:8080 (Fable watch 
 npm run build                # Compile F# to ES modules in dist/ (for npm package)
 npm run rebuild              # Clean dist/ and rebuild
 npm run standalone           # Bundle standalone IIFE to docs/releases/
-npm run release              # Full release: version bump, standalone, build, publish
+npm test                     # Compile F# then run Vitest tests (test/*.test.js)
+
+npm run release              # Full release (runs the three steps below)
+npm run release:version      # Bump version in package.json, create git commit + tag (via np)
+npm run release:standalone   # Build standalone bundle and commit to git
+npm run release:publish      # Rebuild dist/ and npm publish (prompts for 2FA)
 ```
 
-There are no tests or linting configured.
+Tests use Vitest against the Fable-compiled JS output. F# must be compiled before tests run (`npm test` handles this). Test files go in `test/`. Use `c.foldDom(f, acc, node)` to traverse `DomNode` trees in tests — the callback receives `(acc, tag, attrs)` where `attrs` is a plain JS object of string attribute values. CI runs `npm test` on pushes and PRs to `master` via GitHub Actions (`.github/workflows/test.yml`).
 
 ## Architecture
 
@@ -31,6 +36,7 @@ Three files, compiled in this order (defined in `compost.fsproj`):
    - `Common` module: `[<Emit>]`-based helpers for JS operations (property access, typeof, date formatting)
    - `Virtualdom` module: `[<Import>]` bindings to `virtual-dom` (h, diff, patch, createElement)
    - `DomNode`/`DomAttribute` types and HTML/SVG rendering
+   - `foldDom`: generic fold over `DomNode` trees (used in tests to inspect rendered SVG)
    - `createVirtualDomApp`: stateful interactive app loop using virtual-dom diffing
 
 2. **`core.fs`** — `Compost` namespace. The visualization engine (~800 lines):

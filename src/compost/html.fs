@@ -199,6 +199,13 @@ let createVirtualDomApp id initial r u =
   handleEvent None
   event.Publish.Add(Some >> handleEvent)
   
+let rec foldDom f acc node =
+  match node with
+  | Text _ -> acc
+  | Element(ns, tag, attrs, children) ->
+      let acc = f acc ns tag attrs
+      Array.fold (foldDom f) acc children
+
 let text s = Text(s)
 let (=>) k v = k, Attribute(v)
 let (=!>) k f = k, Event(f)
