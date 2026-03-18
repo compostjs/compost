@@ -3253,55 +3253,39 @@
         const k = forLoopVar[0];
         switch (v.tag) {
           case 2: {
-            const o = v.fields[0];
-            const k_2 = k;
-            void props.push([k_2, o]);
+            void props.push([k, v.fields[0]]);
             break;
           }
           case 0: {
-            const k_3 = k;
-            const f = v.fields[0];
-            void props.push(["on" + k_3, (o_1) => {
-              f(o_1["target"], event);
+            void props.push(["on" + k, (o_1) => {
+              v.fields[0](o_1["target"], event);
             }]);
             break;
           }
-          default: {
-            const v_1 = v.fields[0];
-            const k_1 = k;
-            void attrs.push([k_1, v_1]);
-          }
+          default:
+            void attrs.push([k, v.fields[0]]);
         }
       }
     } finally {
       disposeSafe(enumerator);
     }
     const attrs_1 = createObj(attrs);
-    const ns_1 = (ns === defaultOf() ? true : ns === "") ? empty$1() : singleton$1(["namespace", ns]);
-    const props_1 = createObj(append(append$1(ns_1, singleton$1(["attributes", attrs_1])), props));
-    const elem = virtualDomExports.h(tag, props_1, children);
-    return elem;
+    return virtualDomExports.h(tag, createObj(append(append$1((ns === defaultOf() ? true : ns === "") ? empty$1() : singleton$1(["namespace", ns]), singleton$1(["attributes", attrs_1])), props)), children);
   }
   function renderVirtual(node) {
     if (node.tag === 1) {
-      const tag = node.fields[1];
-      const ns = node.fields[0];
-      const children = node.fields[3];
-      const attrs = node.fields[2];
-      return createTree(ns, tag, attrs, map$1(renderVirtual, children));
+      return createTree(node.fields[0], node.fields[1], node.fields[2], map$1(renderVirtual, node.fields[3]));
     } else {
-      const s_1 = node.fields[0];
-      return s_1;
+      return node.fields[0];
     }
   }
   function render(node) {
     if (node.tag === 1) {
       const tag = node.fields[1];
       const ns = node.fields[0];
-      const children = node.fields[3];
       const attrs = node.fields[2];
       const el = (ns === defaultOf() ? true : ns === "") ? document.createElement(tag) : document.createElementNS(ns, tag);
-      const rc = map$1(render, children);
+      const rc = map$1(render, node.fields[3]);
       for (let idx = 0; idx <= rc.length - 1; idx++) {
         const c = item(idx, rc);
         el.appendChild(c);
@@ -3312,24 +3296,19 @@
         const a = forLoopVar[1];
         switch (a.tag) {
           case 1: {
-            const v = a.fields[0];
-            el.setAttribute(k, v);
+            el.setAttribute(k, a.fields[0]);
             break;
           }
           case 0: {
-            a.fields[0];
             break;
           }
-          default: {
-            const o = a.fields[0];
-            el[k] = o;
-          }
+          default:
+            el[k] = a.fields[0];
         }
       }
       return el;
     } else {
-      const s_1 = node.fields[0];
-      return document.createTextNode(s_1);
+      return document.createTextNode(node.fields[0]);
     }
   }
   function renderTo(node, dom) {
@@ -3341,9 +3320,6 @@
   }
   function createVirtualDomApp(id, initial, r, u) {
     const event2 = new Event();
-    const trigger = (e) => {
-      event2.Trigger(e);
-    };
     let container = document.createElement("div");
     document.getElementById(id).innerHTML = "";
     document.getElementById(id).appendChild(container);
@@ -3352,7 +3328,9 @@
     const handleEvent = (evt) => {
       let e_1;
       state = evt != null ? (e_1 = value(evt), u(state, e_1)) : state;
-      const newTree = renderVirtual(r(trigger, state));
+      const newTree = renderVirtual(r((e) => {
+        event2.Trigger(e);
+      }, state));
       const patches = virtualDomExports.diff(tree, newTree);
       container = virtualDomExports.patch(container, patches);
       tree = newTree;
@@ -3361,6 +3339,13 @@
     add((arg) => {
       handleEvent(some(arg));
     }, event2.Publish);
+  }
+  function foldDom(f, acc, node) {
+    if (node.tag === 1) {
+      return fold$2((acc_2, node_1) => foldDom(f, acc_2, node_1), f(acc, node.fields[0], node.fields[1], node.fields[2]), node.fields[3]);
+    } else {
+      return acc;
+    }
   }
   function text(s_1) {
     return new DomNode(0, [s_1]);
@@ -3716,6 +3701,32 @@
       this.FormatAxisYLabel = FormatAxisYLabel;
     }
   }
+  class StyleConfig extends Union {
+    constructor(tag, fields) {
+      super();
+      this.tag = tag;
+      this.fields = fields;
+    }
+    cases() {
+      return ["Custom", "FillColor", "StrokeColor", "Font", "PreserveAspectRatio"];
+    }
+  }
+  function StyleConfig__Apply_4E2CA0C5(this$, style) {
+    switch (this$.tag) {
+      case 1:
+        return new Style(style.StrokeColor, style.StrokeWidth, style.StrokeDashArray, new FillStyle(0, [[1, new Color(1, [this$.fields[0]])]]), style.Animation, style.Font, style.Cursor, style.PreserveAspectRatio, style.FormatAxisXLabel, style.FormatAxisYLabel);
+      case 2:
+        return new Style([1, new Color(1, [this$.fields[0]])], style.StrokeWidth, style.StrokeDashArray, style.Fill, style.Animation, style.Font, style.Cursor, style.PreserveAspectRatio, style.FormatAxisXLabel, style.FormatAxisYLabel);
+      case 3: {
+        const clr_2 = this$.fields[1];
+        return new Style([0, new Color(1, [clr_2])], style.StrokeWidth, style.StrokeDashArray, new FillStyle(0, [[1, new Color(1, [clr_2])]]), style.Animation, this$.fields[0], style.Cursor, style.PreserveAspectRatio, style.FormatAxisXLabel, style.FormatAxisYLabel);
+      }
+      case 4:
+        return new Style(style.StrokeColor, style.StrokeWidth, style.StrokeDashArray, style.Fill, style.Animation, style.Font, style.Cursor, this$.fields[0], style.FormatAxisXLabel, style.FormatAxisYLabel);
+      default:
+        return this$.fields[0](style);
+    }
+  }
   class EventHandler extends Union {
     constructor(tag, fields) {
       super();
@@ -3778,13 +3789,9 @@
       while (enumerator["System.Collections.IEnumerator.MoveNext"]()) {
         const ps = enumerator["System.Collections.Generic.IEnumerator`1.get_Current"]();
         if (ps.tag === 1) {
-          const y_1 = ps.fields[0][1];
-          const x_1 = ps.fields[0][0];
-          Svg_StringBuilder__Append_Z721C83C5(sb, "L" + x_1.toString() + " " + y_1.toString() + " ");
+          Svg_StringBuilder__Append_Z721C83C5(sb, "L" + ps.fields[0][0].toString() + " " + ps.fields[0][1].toString() + " ");
         } else {
-          const y = ps.fields[0][1];
-          const x = ps.fields[0][0];
-          Svg_StringBuilder__Append_Z721C83C5(sb, "M" + x.toString() + " " + y.toString() + " ");
+          Svg_StringBuilder__Append_Z721C83C5(sb, "M" + ps.fields[0][0].toString() + " " + ps.fields[0][1].toString() + " ");
         }
       }
     } finally {
@@ -3804,55 +3811,28 @@
         case 4: {
           const y = svg.fields[0][1];
           const x = svg.fields[0][0];
-          const t = svg.fields[1];
-          const style = svg.fields[3];
           const rotation = svg.fields[2];
-          const attrs = toList(delay(() => append(singleton(op_EqualsGreater("style", style)), delay(() => rotation === 0 ? append(singleton(op_EqualsGreater("x", x.toString())), delay(() => singleton(op_EqualsGreater("y", y.toString())))) : append(singleton(op_EqualsGreater("x", "0")), delay(() => append(singleton(op_EqualsGreater("y", "0")), delay(() => singleton(op_EqualsGreater("transform", toText(printf("translate(%f,%f) rotate(%f)"))(x)(y)(rotation)))))))))));
-          return singleton(El_op_Dynamic_Z451691CD(s, "text")(attrs)(singleton$1(text(t))));
+          return singleton(El_op_Dynamic_Z451691CD(s, "text")(toList(delay(() => append(singleton(op_EqualsGreater("style", svg.fields[3])), delay(() => rotation === 0 ? append(singleton(op_EqualsGreater("x", x.toString())), delay(() => singleton(op_EqualsGreater("y", y.toString())))) : append(singleton(op_EqualsGreater("x", "0")), delay(() => append(singleton(op_EqualsGreater("y", "0")), delay(() => singleton(op_EqualsGreater("transform", toText(printf("translate(%f,%f) rotate(%f)"))(x)(y)(rotation))))))))))))(singleton$1(text(svg.fields[1]))));
         }
-        case 5: {
-          const ss = svg.fields[0];
-          return collect((s2) => Svg_renderSvg(ctx, s2), ss);
-        }
-        case 2: {
-          const style_1 = svg.fields[2];
-          const ry = svg.fields[1][1];
-          const rx = svg.fields[1][0];
-          const cy = svg.fields[0][1];
-          const cx = svg.fields[0][0];
-          const attrs_1 = ofArray([op_EqualsGreater("cx", cx.toString()), op_EqualsGreater("cy", cy.toString()), op_EqualsGreater("rx", rx.toString()), op_EqualsGreater("ry", ry.toString()), op_EqualsGreater("style", style_1)]);
-          return singleton(El_op_Dynamic_Z451691CD(s, "ellipse")(attrs_1)(empty$1()));
-        }
-        case 0: {
-          const y_1 = svg.fields[1][1];
-          const x_1 = svg.fields[1][0];
-          const w = svg.fields[2][0];
-          const preserveAspectRatio = svg.fields[3];
-          const href = svg.fields[0];
-          const h2 = svg.fields[2][1];
-          const attrs_2 = ofArray([op_EqualsGreater("href", href), op_EqualsGreater("preserveAspectRatio", preserveAspectRatio), op_EqualsGreater("x", x_1.toString()), op_EqualsGreater("y", y_1.toString()), op_EqualsGreater("width", w.toString()), op_EqualsGreater("height", h2.toString())]);
-          return singleton(El_op_Dynamic_Z451691CD(s, "image")(attrs_2)(empty$1()));
-        }
+        case 5:
+          return collect((s2) => Svg_renderSvg(ctx, s2), svg.fields[0]);
+        case 2:
+          return singleton(El_op_Dynamic_Z451691CD(s, "ellipse")(ofArray([op_EqualsGreater("cx", svg.fields[0][0].toString()), op_EqualsGreater("cy", svg.fields[0][1].toString()), op_EqualsGreater("rx", svg.fields[1][0].toString()), op_EqualsGreater("ry", svg.fields[1][1].toString()), op_EqualsGreater("style", svg.fields[2])]))(empty$1()));
+        case 0:
+          return singleton(El_op_Dynamic_Z451691CD(s, "image")(ofArray([op_EqualsGreater("href", svg.fields[0]), op_EqualsGreater("preserveAspectRatio", svg.fields[3]), op_EqualsGreater("x", svg.fields[1][0].toString()), op_EqualsGreater("y", svg.fields[1][1].toString()), op_EqualsGreater("width", svg.fields[2][0].toString()), op_EqualsGreater("height", svg.fields[2][1].toString())]))(empty$1()));
         case 3: {
           const y2 = svg.fields[1][1];
           const y1 = svg.fields[0][1];
           const x2 = svg.fields[1][0];
           const x1 = svg.fields[0][0];
-          const style_2 = svg.fields[2];
           const matchValue = min$2(x1, x2);
-          const t_1 = min$2(y1, y2);
-          const l = matchValue;
-          const w_1 = Math.abs(x1 - x2);
-          const h_12 = Math.abs(y1 - y2);
-          const attrs_3 = ofArray([op_EqualsGreater("x", l.toString()), op_EqualsGreater("y", t_1.toString()), op_EqualsGreater("width", w_1.toString()), op_EqualsGreater("height", h_12.toString()), op_EqualsGreater("style", style_2)]);
-          return singleton(El_op_Dynamic_Z451691CD(s, "rect")(attrs_3)(empty$1()));
+          const matchValue_1 = min$2(y1, y2);
+          const matchValue_2 = Math.abs(x1 - x2);
+          const matchValue_3 = Math.abs(y1 - y2);
+          return singleton(El_op_Dynamic_Z451691CD(s, "rect")(ofArray([op_EqualsGreater("x", matchValue.toString()), op_EqualsGreater("y", matchValue_1.toString()), op_EqualsGreater("width", matchValue_2.toString()), op_EqualsGreater("height", matchValue_3.toString()), op_EqualsGreater("style", svg.fields[2])]))(empty$1()));
         }
-        case 1: {
-          const style_3 = svg.fields[1];
-          const p = svg.fields[0];
-          const attrs_4 = ofArray([op_EqualsGreater("d", Svg_formatPath(p)), op_EqualsGreater("style", style_3)]);
-          return singleton(El_op_Dynamic_Z451691CD(s, "path")(attrs_4)(empty$1()));
-        }
+        case 1:
+          return singleton(El_op_Dynamic_Z451691CD(s, "path")(ofArray([op_EqualsGreater("d", Svg_formatPath(svg.fields[0])), op_EqualsGreater("style", svg.fields[1])]))(empty$1()));
         default: {
           return empty();
         }
@@ -3861,26 +3841,20 @@
   }
   function Svg_formatColor(_arg) {
     if (_arg.tag === 1) {
-      const clr = _arg.fields[0];
-      return clr;
+      return _arg.fields[0];
     } else {
-      const r = _arg.fields[0] | 0;
-      const g = _arg.fields[1] | 0;
-      const b = _arg.fields[2] | 0;
-      return toText(printf("rgb(%d, %d, %d)"))(r)(g)(b);
+      return toText(printf("rgb(%d, %d, %d)"))(_arg.fields[0])(_arg.fields[1])(_arg.fields[2]);
     }
   }
   function Svg_formatNumber(_arg) {
     if (_arg.tag === 1) {
-      const p = _arg.fields[0];
-      return p.toString() + "%";
+      return _arg.fields[0].toString() + "%";
     } else {
-      const n = _arg.fields[0] | 0;
-      return int32ToString(n);
+      return int32ToString(_arg.fields[0]);
     }
   }
   function Svg_formatStyle(defs, style) {
-    let copyOfStruct, bind$0040, patternInput_1, so, clr, sw, arg_10, matchValue_1, fo, clr_2, arg_17, points, id_1, copyOfStruct_1, item_1;
+    let copyOfStruct, bind$0040, patternInput_1, arg_10, matchValue_1, arg_17, id_1, copyOfStruct_1, item_1;
     let patternInput;
     const matchValue = style.Animation;
     if (matchValue == null) {
@@ -3897,13 +3871,7 @@
       patternInput = [anim(style), toText(printf("animation: %s %dms %s; "))(id)(ms)(ease)];
     }
     const style_1 = patternInput[0];
-    const anim_1 = patternInput[1];
-    return anim_1 + join("", toList(delay(() => map((c) => "cursor:" + c + ";", split(style_1.Cursor, [","], void 0, 0))))) + ("font:" + style_1.Font + ";") + (patternInput_1 = style_1.StrokeColor, so = patternInput_1[0], clr = patternInput_1[1], sw = style_1.StrokeWidth.fields[0] | 0, arg_10 = Svg_formatColor(clr), toText(printf("stroke-opacity:%f; stroke-width:%dpx; stroke:%s; "))(so)(sw)(arg_10)) + (isEmpty(style_1.StrokeDashArray) ? "" : "stroke-dasharray:" + join(",", map(Svg_formatNumber, style_1.StrokeDashArray)) + ";") + (matchValue_1 = style_1.Fill, matchValue_1.tag === 0 ? (fo = matchValue_1.fields[0][0], clr_2 = matchValue_1.fields[0][1], arg_17 = Svg_formatColor(clr_2), toText(printf("fill-opacity:%f; fill:%s; "))(fo)(arg_17)) : (points = matchValue_1.fields[0], id_1 = "gradient_" + replace((copyOfStruct_1 = newGuid(), copyOfStruct_1), "-", ""), item_1 = El_op_Dynamic_Z451691CD(s, "linearGradient")(singleton$1(op_EqualsGreater("id", id_1)))(toList(delay(() => collect((matchValue_2) => {
-      const pt = matchValue_2[0];
-      const o = matchValue_2[1][0];
-      const clr_1 = matchValue_2[1][1];
-      return singleton(El_op_Dynamic_Z451691CD(s, "stop")(ofArray([op_EqualsGreater("offset", pt.toString() + "%"), op_EqualsGreater("stop-color", Svg_formatColor(clr_1)), op_EqualsGreater("stop-opacity", o.toString())]))(empty$1()));
-    }, points)))), void defs.push(item_1), toText(printf("fill:url(#%s)"))(id_1)));
+    return patternInput[1] + join("", toList(delay(() => map((c) => "cursor:" + c + ";", split(style_1.Cursor, [","], void 0, 0))))) + ("font:" + style_1.Font + ";") + (patternInput_1 = style_1.StrokeColor, arg_10 = Svg_formatColor(patternInput_1[1]), toText(printf("stroke-opacity:%f; stroke-width:%dpx; stroke:%s; "))(patternInput_1[0])(style_1.StrokeWidth.fields[0])(arg_10)) + (isEmpty(style_1.StrokeDashArray) ? "" : "stroke-dasharray:" + join(",", map(Svg_formatNumber, style_1.StrokeDashArray)) + ";") + (matchValue_1 = style_1.Fill, matchValue_1.tag === 0 ? (arg_17 = Svg_formatColor(matchValue_1.fields[0][1]), toText(printf("fill-opacity:%f; fill:%s; "))(matchValue_1.fields[0][0])(arg_17)) : (id_1 = "gradient_" + replace((copyOfStruct_1 = newGuid(), copyOfStruct_1), "-", ""), item_1 = El_op_Dynamic_Z451691CD(s, "linearGradient")(singleton$1(op_EqualsGreater("id", id_1)))(toList(delay(() => collect((matchValue_2) => singleton(El_op_Dynamic_Z451691CD(s, "stop")(ofArray([op_EqualsGreater("offset", matchValue_2[0].toString() + "%"), op_EqualsGreater("stop-color", Svg_formatColor(matchValue_2[1][1])), op_EqualsGreater("stop-opacity", matchValue_2[1][0].toString())]))(empty$1())), matchValue_1.fields[0])))), void defs.push(item_1), toText(printf("fill:url(#%s)"))(id_1)));
   }
   class Scales_ScaledShape extends Union {
     constructor(tag, fields) {
@@ -3920,22 +3888,18 @@
       const vals = _arg.fields[0];
       return [new Value(0, [item(0, vals), 0]), new Value(0, [item(vals.length - 1, vals), 1])];
     } else {
-      const l = _arg.fields[0];
-      const h2 = _arg.fields[1];
-      return [new Value(1, [l]), new Value(1, [h2])];
+      return [new Value(1, [_arg.fields[0]]), new Value(1, [_arg.fields[1]])];
     }
   }
   function Scales_calculateMagnitudeAndRange(lo, hi) {
-    let magnitude;
-    const arg1__1 = round(Math.log10(hi - lo));
-    magnitude = Math.pow(10, arg1__1);
-    const magnitude_1 = magnitude / 2;
+    let arg1__1;
+    const magnitude_1 = (arg1__1 = round(Math.log10(hi - lo)), Math.pow(10, arg1__1)) / 2;
     return [magnitude_1, [Math.floor(lo / magnitude_1) * magnitude_1, Math.ceil(hi / magnitude_1) * magnitude_1]];
   }
   function Scales_decimalPoints(range_, range__1) {
     const range = [range_, range__1];
-    const magnitude = Scales_calculateMagnitudeAndRange(range[0], range[1])[0];
-    return max$2(0, Math.ceil(-Math.log10(magnitude)));
+    const patternInput = Scales_calculateMagnitudeAndRange(range[0], range[1]);
+    return max$2(0, Math.ceil(-Math.log10(patternInput[0])));
   }
   function Scales_adjustRange(range_, range__1) {
     const range = [range_, range__1];
@@ -3943,49 +3907,33 @@
   }
   function Scales_adjustRangeUnits(l, h2) {
     const patternInput = Scales_adjustRange(l, h2);
-    const l_1 = patternInput[0];
-    const h_12 = patternInput[1];
-    return [l_1, h_12];
+    return [patternInput[0], patternInput[1]];
   }
   function Scales_toArray(s2) {
     return Array.from(s2);
   }
   function Scales_generateSteps(count, k, lo, hi) {
     const patternInput = Scales_calculateMagnitudeAndRange(lo, hi);
-    const nlo = patternInput[1][0];
-    const nhi = patternInput[1][1];
     const magnitude = patternInput[0];
-    const dividers = ofArray([0.2, 0.5, 1, 2, 5, 10, 20, 40, 50, 60, 80, 100]);
-    const magnitudes = map((d) => magnitude / d, dividers);
-    const step = tryHead(filter((m) => (hi - lo) / m >= count, magnitudes));
-    const step_1 = defaultArg(step, magnitude / 100);
-    return Scales_toArray(delay(() => collect((v) => v >= lo && v <= hi ? singleton(v) : empty(), rangeDouble(nlo, step_1 * k, nhi))));
+    const step_1 = defaultArg(tryHead(filter((m) => (hi - lo) / m >= count, map((d) => magnitude / d, [0.2, 0.5, 1, 2, 5, 10, 20, 40, 50, 60, 80, 100]))), magnitude / 100);
+    return Scales_toArray(delay(() => collect((v) => v >= lo && v <= hi ? singleton(v) : empty(), rangeDouble(patternInput[1][0], step_1 * k, patternInput[1][1]))));
   }
   function Scales_generateAxisSteps(s2) {
     if (s2.tag === 1) {
-      const vs = s2.fields[0];
-      return toArray(delay(() => collect((matchValue) => {
-        const s_1 = matchValue.fields[0];
-        return singleton(new Value(0, [new categorical(s_1), 0.5]));
-      }, vs)));
+      return toArray(delay(() => collect((matchValue) => singleton(new Value(0, [new categorical(matchValue.fields[0]), 0.5])), s2.fields[0])));
     } else {
-      const l = s2.fields[0].fields[0];
-      const h2 = s2.fields[1].fields[0];
-      return map$1((f) => new Value(1, [new continuous(f)]), Scales_generateSteps(6, 1, l, h2));
+      return map$1((f) => new Value(1, [new continuous(f)]), Scales_generateSteps(6, 1, s2.fields[0].fields[0], s2.fields[1].fields[0]));
     }
   }
   function Scales_generateAxisLabels(fmt, s2) {
     const sunit = s2;
     if (s2.tag === 1) {
-      const vs = s2.fields[0];
       return toArray(delay(() => collect((matchValue) => {
         const s_1 = matchValue.fields[0];
         return singleton([new Value(0, [new categorical(s_1), 0.5]), fmt(sunit, new Value(0, [new categorical(s_1), 0.5]))]);
-      }, vs)));
+      }, s2.fields[0])));
     } else {
-      const l = s2.fields[0].fields[0];
-      const h2 = s2.fields[1].fields[0];
-      return map$1((f) => [new Value(1, [new continuous(f)]), fmt(sunit, new Value(1, [new continuous(f)]))], Scales_generateSteps(6, 2, l, h2));
+      return map$1((f) => [new Value(1, [new continuous(f)]), fmt(sunit, new Value(1, [new continuous(f)]))], Scales_generateSteps(6, 2, s2.fields[0].fields[0], s2.fields[1].fields[0]));
     }
   }
   function Scales_unionScales(s1, s2) {
@@ -4074,13 +4022,11 @@
           Compare: comparePrimitives
         }))]);
       }
-      case 2: {
-        const xs_1 = scales.fields[0];
-        return new Scale(1, [Array_distinct(toArray(delay(() => map((x_4) => new categorical(x_4), reverse(xs_1)))), {
+      case 2:
+        return new Scale(1, [Array_distinct(toArray(delay(() => map((x_4) => new categorical(x_4), reverse(scales.fields[0])))), {
           Equals: equals,
           GetHashCode: safeHash
         })]);
-      }
       default:
         throw new Error("No values for calculating a scale");
     }
@@ -4091,148 +4037,88 @@
     return [Scales_calculateShapeScale(xs), Scales_calculateShapeScale(ys)];
   }
   function Scales_calculateScales(style, shape) {
-    const calculateScalesStyle = Scales_calculateScales;
     const calculateScales = (shape_2) => Scales_calculateScales(style, shape_2);
     switch (shape.tag) {
       case 5: {
-        const shape_5 = shape.fields[2];
         const nx2 = shape.fields[1];
         const nx1 = shape.fields[0];
-        const patternInput_1 = calculateScales(shape_5);
-        const shape_6 = patternInput_1[1];
-        const isy = patternInput_1[0][1];
-        const isx = patternInput_1[0][0];
-        return [[Scales_calculateShapeScale([nx1, nx2]), isy], new Scales_ScaledShape(10, [nx1, nx2, isx, shape_6])];
+        const patternInput_1 = calculateScales(shape.fields[2]);
+        return [[Scales_calculateShapeScale([nx1, nx2]), patternInput_1[0][1]], new Scales_ScaledShape(10, [nx1, nx2, patternInput_1[0][0], patternInput_1[1]])];
       }
       case 6: {
-        const shape_7 = shape.fields[2];
         const ny2 = shape.fields[1];
         const ny1 = shape.fields[0];
-        const patternInput_2 = calculateScales(shape_7);
-        const shape_8 = patternInput_2[1];
-        const isy_1 = patternInput_2[0][1];
-        const isx_1 = patternInput_2[0][0];
-        return [[isx_1, Scales_calculateShapeScale([ny1, ny2])], new Scales_ScaledShape(11, [ny1, ny2, isy_1, shape_8])];
+        const patternInput_2 = calculateScales(shape.fields[2]);
+        return [[patternInput_2[0][0], Scales_calculateShapeScale([ny1, ny2])], new Scales_ScaledShape(11, [ny1, ny2, patternInput_2[0][1], patternInput_2[1]])];
       }
       case 4: {
         const sy = shape.fields[1];
         const sx = shape.fields[0];
-        const shape_9 = shape.fields[2];
-        const patternInput_3 = calculateScales(shape_9);
-        const shape_10 = patternInput_3[1];
-        const isy_2 = patternInput_3[0][1];
-        const isx_2 = patternInput_3[0][0];
-        let sx_2;
-        if (sx != null) {
-          const sx_1 = sx;
-          sx_2 = sx_1;
-        } else {
-          sx_2 = isx_2;
-        }
-        let sy_2;
-        if (sy != null) {
-          const sy_1 = sy;
-          sy_2 = sy_1;
-        } else {
-          sy_2 = isy_2;
-        }
-        return [[sx_2, sy_2], shape_10];
+        const patternInput_3 = calculateScales(shape.fields[2]);
+        return [[sx != null ? sx : patternInput_3[0][0], sy != null ? sy : patternInput_3[0][1]], patternInput_3[1]];
       }
       case 3: {
-        const shape_11 = shape.fields[2];
-        const ay = shape.fields[1];
-        const ax = shape.fields[0];
-        const patternInput_4 = calculateScales(shape_11);
-        const shape_12 = patternInput_4[1];
+        const patternInput_4 = calculateScales(shape.fields[2]);
         const isy_3 = patternInput_4[0][1];
         const isx_3 = patternInput_4[0][0];
         const autoScale = (_arg) => {
           if (_arg.tag === 0) {
-            const l = _arg.fields[0].fields[0];
-            const h2 = _arg.fields[1].fields[0];
-            const patternInput_5 = Scales_adjustRangeUnits(l, h2);
-            const l_1 = patternInput_5[0];
-            const h_12 = patternInput_5[1];
-            return new Scale(0, [new continuous(l_1), new continuous(h_12)]);
+            const patternInput_5 = Scales_adjustRangeUnits(_arg.fields[0].fields[0], _arg.fields[1].fields[0]);
+            return new Scale(0, [new continuous(patternInput_5[0]), new continuous(patternInput_5[1])]);
           } else {
-            const scale2 = _arg;
-            return scale2;
+            return _arg;
           }
         };
-        const scales_1 = [ax ? autoScale(isx_3) : isx_3, ay ? autoScale(isy_3) : isy_3];
-        return [scales_1, shape_12];
+        return [[shape.fields[0] ? autoScale(isx_3) : isx_3, shape.fields[1] ? autoScale(isy_3) : isy_3], patternInput_4[1]];
       }
       case 14: {
-        const shape_13 = shape.fields[1];
-        const offs = shape.fields[0];
-        const patternInput_6 = calculateScales(shape_13);
-        const shape_14 = patternInput_6[1];
-        const scales_2 = patternInput_6[0];
-        return [scales_2, new Scales_ScaledShape(9, [offs, shape_14])];
+        const patternInput_6 = calculateScales(shape.fields[1]);
+        return [patternInput_6[0], new Scales_ScaledShape(9, [shape.fields[0], patternInput_6[1]])];
       }
       case 13: {
-        const shape_15 = shape.fields[1];
-        const pads = shape.fields[0];
-        const patternInput_7 = calculateScales(shape_15);
+        const patternInput_7 = calculateScales(shape.fields[1]);
         const sy_3 = patternInput_7[0][1];
         const sx_3 = patternInput_7[0][0];
-        const shape_16 = patternInput_7[1];
-        return [[sx_3, sy_3], new Scales_ScaledShape(8, [pads, sx_3, sy_3, shape_16])];
+        return [[sx_3, sy_3], new Scales_ScaledShape(8, [shape.fields[0], sx_3, sy_3, patternInput_7[1]])];
       }
       case 8: {
         const y = shape.fields[1];
         const x = shape.fields[0];
-        const ry = shape.fields[3];
-        const rx = shape.fields[2];
         const makeSingletonScale = (_arg_1) => {
           if (_arg_1.tag === 0) {
-            const v_1 = _arg_1.fields[0];
-            return new Scale(1, [[v_1]]);
+            return new Scale(1, [[_arg_1.fields[0]]]);
           } else {
             const v = _arg_1.fields[0];
             return new Scale(0, [v, v]);
           }
         };
-        const scales_3 = [makeSingletonScale(x), makeSingletonScale(y)];
-        return [scales_3, new Scales_ScaledShape(3, [x, y, rx, ry])];
+        return [[makeSingletonScale(x), makeSingletonScale(y)], new Scales_ScaledShape(3, [x, y, shape.fields[2], shape.fields[3]])];
       }
       case 2: {
         const y_1 = shape.fields[1];
         const x_1 = shape.fields[0];
-        const va = shape.fields[2];
-        const t = shape.fields[5];
-        const r = shape.fields[4];
-        const ha = shape.fields[3];
         const makeSingletonScale_1 = (_arg_2) => {
           if (_arg_2.tag === 0) {
-            const v_3 = _arg_2.fields[0];
-            return new Scale(1, [[v_3]]);
+            return new Scale(1, [[_arg_2.fields[0]]]);
           } else {
             const v_2 = _arg_2.fields[0];
             return new Scale(0, [v_2, v_2]);
           }
         };
-        const scales_4 = [makeSingletonScale_1(x_1), makeSingletonScale_1(y_1)];
-        return [scales_4, new Scales_ScaledShape(1, [x_1, y_1, va, ha, r, t])];
+        return [[makeSingletonScale_1(x_1), makeSingletonScale_1(y_1)], new Scales_ScaledShape(1, [x_1, y_1, shape.fields[2], shape.fields[3], shape.fields[4], shape.fields[5]])];
       }
       case 7: {
-        const line = shape.fields[0];
-        const line_1 = toArray(line);
-        const scales_5 = Scales_calculateShapeScales(line_1);
-        return [scales_5, new Scales_ScaledShape(2, [line_1])];
+        const line_1 = toArray(shape.fields[0]);
+        return [Scales_calculateShapeScales(line_1), new Scales_ScaledShape(2, [line_1])];
       }
       case 0: {
         const pt2 = shape.fields[2];
         const pt1 = shape.fields[1];
-        const href = shape.fields[0];
-        const scales_6 = Scales_calculateShapeScales([pt1, pt2]);
-        return [scales_6, new Scales_ScaledShape(5, [href, pt1, pt2])];
+        return [Scales_calculateShapeScales([pt1, pt2]), new Scales_ScaledShape(5, [shape.fields[0], pt1, pt2])];
       }
       case 9: {
-        const points = shape.fields[0];
-        const points_1 = toArray(points);
-        const scales_7 = Scales_calculateShapeScales(points_1);
-        return [scales_7, new Scales_ScaledShape(4, [points_1])];
+        const points_1 = toArray(shape.fields[0]);
+        return [Scales_calculateShapeScales(points_1), new Scales_ScaledShape(4, [points_1])];
       }
       case 11: {
         const showTop = shape.fields[0];
@@ -4243,65 +4129,31 @@
         const patternInput_8 = calculateScales(shape_17);
         const sy_4 = patternInput_8[0][1];
         const sx_4 = patternInput_8[0][0];
-        patternInput_8[0];
         const matchValue = Scales_getExtremes(sx_4);
         const matchValue_1 = Scales_getExtremes(sy_4);
         const ly = matchValue_1[0];
         const lx = matchValue[0];
         const hy = matchValue_1[1];
         const hx = matchValue[1];
-        const LineStyle = (clr, alpha, width, shape_18) => new Shape(1, [(s2) => new Style([alpha, new Color(1, [clr])], new Width(width), s2.StrokeDashArray, new FillStyle(0, [[1, new Color(1, ["transparent"])]]), s2.Animation, s2.Font, s2.Cursor, s2.PreserveAspectRatio, s2.FormatAxisXLabel, s2.FormatAxisYLabel), shape_18]);
-        const FontStyle = (style_2, shape_19) => new Shape(1, [(s_1) => new Style([0, new Color(1, ["transparent"])], s_1.StrokeWidth, s_1.StrokeDashArray, new FillStyle(0, [[1, new Color(1, ["black"])]]), s_1.Animation, style_2, s_1.Cursor, s_1.PreserveAspectRatio, s_1.FormatAxisXLabel, s_1.FormatAxisYLabel), shape_19]);
-        const shape_20 = new Shape(10, [toList(delay(() => append(singleton(new Shape(4, [sx_4, sy_4, new Shape(10, [toList(delay(() => append(map((x_2) => LineStyle("#e4e4e4", 1, 1, new Shape(7, [[[x_2, ly], [x_2, hy]]])), Scales_generateAxisSteps(sx_4)), delay(() => map((y_2) => LineStyle("#e4e4e4", 1, 1, new Shape(7, [[[lx, y_2], [hx, y_2]]])), Scales_generateAxisSteps(sy_4))))))])])), delay(() => append(showTop ? append(singleton(LineStyle("black", 1, 2, new Shape(7, [[[lx, hy], [hx, hy]]]))), delay(() => collect((matchValue_2) => {
-          const x_3 = matchValue_2[0];
-          const l_2 = matchValue_2[1];
-          return singleton(FontStyle("9pt sans-serif", new Shape(14, [[0, -10], new Shape(2, [x_3, hy, new VerticalAlign(0, []), new HorizontalAlign(1, []), 0, l_2])])));
-        }, Scales_generateAxisLabels(style.FormatAxisXLabel, sx_4)))) : empty(), delay(() => append(showRight ? append(singleton(LineStyle("black", 1, 2, new Shape(7, [[[hx, hy], [hx, ly]]]))), delay(() => collect((matchValue_3) => {
-          const y_3 = matchValue_3[0];
-          const l_3 = matchValue_3[1];
-          return singleton(FontStyle("9pt sans-serif", new Shape(14, [[10, 0], new Shape(2, [hx, y_3, new VerticalAlign(1, []), new HorizontalAlign(0, []), 0, l_3])])));
-        }, Scales_generateAxisLabels(style.FormatAxisYLabel, sy_4)))) : empty(), delay(() => append(showBottom ? append(singleton(LineStyle("black", 1, 2, new Shape(7, [[[lx, ly], [hx, ly]]]))), delay(() => collect((matchValue_4) => {
-          const x_4 = matchValue_4[0];
-          const l_4 = matchValue_4[1];
-          return singleton(FontStyle("9pt sans-serif", new Shape(14, [[0, 10], new Shape(2, [x_4, ly, new VerticalAlign(2, []), new HorizontalAlign(1, []), 0, l_4])])));
-        }, Scales_generateAxisLabels(style.FormatAxisXLabel, sx_4)))) : empty(), delay(() => append(showLeft ? append(singleton(LineStyle("black", 1, 2, new Shape(7, [[[lx, hy], [lx, ly]]]))), delay(() => collect((matchValue_5) => {
-          const y_4 = matchValue_5[0];
-          const l_5 = matchValue_5[1];
-          return singleton(FontStyle("9pt sans-serif", new Shape(14, [[-10, 0], new Shape(2, [lx, y_4, new VerticalAlign(1, []), new HorizontalAlign(2, []), 0, l_5])])));
-        }, Scales_generateAxisLabels(style.FormatAxisYLabel, sy_4)))) : empty(), delay(() => singleton(shape_17)))))))))))))]);
-        const padding = [showTop ? 30 : 0, showRight ? 50 : 0, showBottom ? 30 : 0, showLeft ? 50 : 0];
-        return calculateScales(new Shape(13, [padding, shape_20]));
+        const LineStyle = (clr, alpha, width, shape_18) => new Shape(1, [new StyleConfig(0, [(s2) => new Style([alpha, new Color(1, [clr])], new Width(width), s2.StrokeDashArray, new FillStyle(0, [[1, new Color(1, ["transparent"])]]), s2.Animation, s2.Font, s2.Cursor, s2.PreserveAspectRatio, s2.FormatAxisXLabel, s2.FormatAxisYLabel)]), shape_18]);
+        const FontStyle = (style_2, shape_19) => new Shape(1, [new StyleConfig(0, [(s_1) => new Style([0, new Color(1, ["transparent"])], s_1.StrokeWidth, s_1.StrokeDashArray, new FillStyle(0, [[1, new Color(1, ["black"])]]), s_1.Animation, style_2, s_1.Cursor, s_1.PreserveAspectRatio, s_1.FormatAxisXLabel, s_1.FormatAxisYLabel)]), shape_19]);
+        return calculateScales(new Shape(13, [[showTop ? 30 : 0, showRight ? 50 : 0, showBottom ? 30 : 0, showLeft ? 50 : 0], new Shape(10, [toList(delay(() => append(singleton(new Shape(4, [sx_4, sy_4, new Shape(10, [toList(delay(() => append(map((x_2) => LineStyle("#e4e4e4", 1, 1, new Shape(7, [[[x_2, ly], [x_2, hy]]])), Scales_generateAxisSteps(sx_4)), delay(() => map((y_2) => LineStyle("#e4e4e4", 1, 1, new Shape(7, [[[lx, y_2], [hx, y_2]]])), Scales_generateAxisSteps(sy_4))))))])])), delay(() => append(showTop ? append(singleton(LineStyle("black", 1, 2, new Shape(7, [[[lx, hy], [hx, hy]]]))), delay(() => collect((matchValue_2) => singleton(FontStyle("9pt sans-serif", new Shape(14, [[0, -10], new Shape(2, [matchValue_2[0], hy, new VerticalAlign(0, []), new HorizontalAlign(1, []), 0, matchValue_2[1]])]))), Scales_generateAxisLabels(style.FormatAxisXLabel, sx_4)))) : empty(), delay(() => append(showRight ? append(singleton(LineStyle("black", 1, 2, new Shape(7, [[[hx, hy], [hx, ly]]]))), delay(() => collect((matchValue_3) => singleton(FontStyle("9pt sans-serif", new Shape(14, [[10, 0], new Shape(2, [hx, matchValue_3[0], new VerticalAlign(1, []), new HorizontalAlign(0, []), 0, matchValue_3[1]])]))), Scales_generateAxisLabels(style.FormatAxisYLabel, sy_4)))) : empty(), delay(() => append(showBottom ? append(singleton(LineStyle("black", 1, 2, new Shape(7, [[[lx, ly], [hx, ly]]]))), delay(() => collect((matchValue_4) => singleton(FontStyle("9pt sans-serif", new Shape(14, [[0, 10], new Shape(2, [matchValue_4[0], ly, new VerticalAlign(2, []), new HorizontalAlign(1, []), 0, matchValue_4[1]])]))), Scales_generateAxisLabels(style.FormatAxisXLabel, sx_4)))) : empty(), delay(() => append(showLeft ? append(singleton(LineStyle("black", 1, 2, new Shape(7, [[[lx, hy], [lx, ly]]]))), delay(() => collect((matchValue_5) => singleton(FontStyle("9pt sans-serif", new Shape(14, [[-10, 0], new Shape(2, [lx, matchValue_5[0], new VerticalAlign(1, []), new HorizontalAlign(2, []), 0, matchValue_5[1]])]))), Scales_generateAxisLabels(style.FormatAxisYLabel, sy_4)))) : empty(), delay(() => singleton(shape_17)))))))))))))])]));
       }
       case 10: {
-        const shapes = shape.fields[0];
-        const shapes_1 = Array.from(shapes);
-        const scaled = map$1(calculateScales, shapes_1);
-        const sxs = map$1((tupledArg) => {
-          const sx_5 = tupledArg[0][0];
-          return sx_5;
-        }, scaled);
-        const sys = map$1((tupledArg_1) => {
-          const sy_5 = tupledArg_1[0][1];
-          return sy_5;
-        }, scaled);
-        const scales_8 = [sxs.reduce(Scales_unionScales), sys.reduce(Scales_unionScales)];
-        return [scales_8, new Scales_ScaledShape(6, [map$1((tuple) => tuple[1], scaled)])];
+        const scaled = map$1(calculateScales, Array.from(shape.fields[0]));
+        const sxs = map$1((tupledArg) => tupledArg[0][0], scaled);
+        const sys = map$1((tupledArg_1) => tupledArg_1[0][1], scaled);
+        return [[sxs.reduce(Scales_unionScales), sys.reduce(Scales_unionScales)], new Scales_ScaledShape(6, [map$1((tuple) => tuple[1], scaled)])];
       }
       case 12: {
-        const shape_21 = shape.fields[1];
-        const f_1 = shape.fields[0];
-        const patternInput_10 = calculateScales(shape_21);
-        const shape_22 = patternInput_10[1];
+        const patternInput_10 = calculateScales(shape.fields[1]);
         const scales_9 = patternInput_10[0];
-        return [scales_9, new Scales_ScaledShape(7, [f_1, scales_9[0], scales_9[1], shape_22])];
+        return [scales_9, new Scales_ScaledShape(7, [shape.fields[0], scales_9[0], scales_9[1], patternInput_10[1]])];
       }
       default: {
-        const shape_3 = shape.fields[1];
-        const f = shape.fields[0];
-        const patternInput = calculateScalesStyle(f(style), shape_3);
-        const shape_4 = patternInput[1];
-        const scales = patternInput[0];
-        return [scales, new Scales_ScaledShape(0, [f, shape_4])];
+        const sc = shape.fields[0];
+        const patternInput = Scales_calculateScales(StyleConfig__Apply_4E2CA0C5(sc, style), shape.fields[1]);
+        return [patternInput[0], new Scales_ScaledShape(0, [sc, patternInput[1]])];
       }
     }
   }
@@ -4309,28 +4161,16 @@
     if (scale2.tag === 0) {
       if (coord.tag === 0) {
         return toFail(printf("Cannot project categorical value (%A) on a continuous scale (%A)."))(coord)(scale2);
+      } else if (reversed) {
+        return thv - (coord.fields[0].fields[0] - scale2.fields[0].fields[0]) / (scale2.fields[1].fields[0] - scale2.fields[0].fields[0]) * (thv - tlv);
       } else {
-        const shv = scale2.fields[1].fields[0];
-        const slv = scale2.fields[0].fields[0];
-        const v_1 = coord.fields[0].fields[0];
-        if (reversed) {
-          return thv - (v_1 - slv) / (shv - slv) * (thv - tlv);
-        } else {
-          return tlv + (v_1 - slv) / (shv - slv) * (thv - tlv);
-        }
+        return tlv + (coord.fields[0].fields[0] - scale2.fields[0].fields[0]) / (scale2.fields[1].fields[0] - scale2.fields[0].fields[0]) * (thv - tlv);
       }
     } else if (coord.tag === 1) {
       return toFail(printf("Cannot project continuous value (%A) on a categorical scale (%A)."))(coord)(scale2);
     } else {
-      const f = coord.fields[1];
-      const v = coord.fields[0].fields[0];
-      const vals = scale2.fields[0];
-      const size = (thv - tlv) / vals.length;
-      const i = findIndex((_arg) => {
-        const vv = _arg.fields[0];
-        return v === vv;
-      }, vals) | 0;
-      const i_1 = i + f;
+      const size = (thv - tlv) / scale2.fields[0].length;
+      const i_1 = findIndex((_arg) => coord.fields[0].fields[0] === _arg.fields[0], scale2.fields[0]) + coord.fields[1];
       if (reversed) {
         return thv - i_1 * size;
       } else {
@@ -4379,52 +4219,39 @@
     }
   }
   function Drawing_hideFill(style) {
-    let matchValue, n, f, e;
-    return new Style(style.StrokeColor, style.StrokeWidth, style.StrokeDashArray, new FillStyle(0, [[0, new Color(0, [0, 0, 0])]]), (matchValue = style.Animation, matchValue != null ? (n = matchValue[0] | 0, f = matchValue[2], e = matchValue[1], [n, e, (arg) => Drawing_hideFill(f(arg))]) : void 0), style.Font, style.Cursor, style.PreserveAspectRatio, style.FormatAxisXLabel, style.FormatAxisYLabel);
+    let matchValue, f;
+    return new Style(style.StrokeColor, style.StrokeWidth, style.StrokeDashArray, new FillStyle(0, [[0, new Color(0, [0, 0, 0])]]), (matchValue = style.Animation, matchValue != null ? (f = matchValue[2], [matchValue[0], matchValue[1], (arg) => Drawing_hideFill(f(arg))]) : void 0), style.Font, style.Cursor, style.PreserveAspectRatio, style.FormatAxisXLabel, style.FormatAxisYLabel);
   }
   function Drawing_hideStroke(style) {
-    let matchValue, n, f, e;
-    return new Style([0, style.StrokeColor[1]], style.StrokeWidth, style.StrokeDashArray, style.Fill, (matchValue = style.Animation, matchValue != null ? (n = matchValue[0] | 0, f = matchValue[2], e = matchValue[1], [n, e, (arg) => Drawing_hideStroke(f(arg))]) : void 0), style.Font, style.Cursor, style.PreserveAspectRatio, style.FormatAxisXLabel, style.FormatAxisYLabel);
+    let matchValue, f;
+    return new Style([0, style.StrokeColor[1]], style.StrokeWidth, style.StrokeDashArray, style.Fill, (matchValue = style.Animation, matchValue != null ? (f = matchValue[2], [matchValue[0], matchValue[1], (arg) => Drawing_hideStroke(f(arg))]) : void 0), style.Font, style.Cursor, style.PreserveAspectRatio, style.FormatAxisXLabel, style.FormatAxisYLabel);
   }
   function Drawing_drawShape(ctx_mut, area__mut, area__1_mut, area__2_mut, area__3_mut, scales__mut, scales__1_mut, shape_mut) {
     Drawing_drawShape:
       while (true) {
         const ctx = ctx_mut, area_ = area__mut, area__1 = area__1_mut, area__2 = area__2_mut, area__3 = area__3_mut, scales_ = scales__mut, scales__1 = scales__1_mut, shape = shape_mut;
-        const area = [area_, area__1, area__2, area__3];
-        const scales = [scales_, scales__1];
-        const area_1 = area;
+        const area_1 = [area_, area__1, area__2, area__3];
         const y2 = area_1[3];
         const y1 = area_1[1];
         const x2 = area_1[2];
         const x1 = area_1[0];
-        const scales_1 = scales;
+        const scales_1 = [scales_, scales__1];
         const sy = scales_1[1];
         const sx = scales_1[0];
-        const project = (tupledArg) => {
-          const vx = tupledArg[0];
-          const vy = tupledArg[1];
-          return [Projections_projectOneX(x1, x2)(sx)(vx), Projections_projectOneY(y1, y2)(sy)(vy)];
-        };
+        const project = (tupledArg) => [Projections_projectOneX(x1, x2)(sx)(tupledArg[0]), Projections_projectOneY(y1, y2)(sy)(tupledArg[1])];
         switch (shape.tag) {
           case 11: {
-            const shape_2 = shape.fields[3];
-            const p2_1 = shape.fields[1];
-            const p1_1 = shape.fields[0];
-            const isy = shape.fields[2];
-            const y1$0027 = Projections_projectOneY(y1, y2)(sy)(p1_1);
-            const y2$0027 = Projections_projectOneY(y1, y2)(sy)(p2_1);
             ctx_mut = ctx;
             area__mut = x1;
-            area__1_mut = y1$0027;
+            area__1_mut = Projections_projectOneY(y1, y2)(sy)(shape.fields[0]);
             area__2_mut = x2;
-            area__3_mut = y2$0027;
+            area__3_mut = Projections_projectOneY(y1, y2)(sy)(shape.fields[1]);
             scales__mut = sx;
-            scales__1_mut = isy;
-            shape_mut = shape_2;
+            scales__1_mut = shape.fields[2];
+            shape_mut = shape.fields[3];
             continue Drawing_drawShape;
           }
           case 9: {
-            const shape_3 = shape.fields[1];
             const dy = shape.fields[0][1];
             const dx = shape.fields[0][0];
             ctx_mut = ctx;
@@ -4434,67 +4261,51 @@
             area__3_mut = y2 + dy;
             scales__mut = scales_1[0];
             scales__1_mut = scales_1[1];
-            shape_mut = shape_3;
+            shape_mut = shape.fields[1];
             continue Drawing_drawShape;
           }
-          case 6: {
-            const shapes = shape.fields[0];
-            return new Svg_Svg(5, [map$1((shape_4) => Drawing_drawShape(ctx, area_1[0], area_1[1], area_1[2], area_1[3], scales_1[0], scales_1[1], shape_4), shapes)]);
-          }
+          case 6:
+            return new Svg_Svg(5, [map$1((shape_4) => Drawing_drawShape(ctx, area_1[0], area_1[1], area_1[2], area_1[3], scales_1[0], scales_1[1], shape_4), shape.fields[0])]);
           case 0: {
-            const shape_5 = shape.fields[1];
-            const f = shape.fields[0];
-            ctx_mut = new Drawing_DrawingContext(f(ctx.Style), ctx.Definitions);
+            ctx_mut = new Drawing_DrawingContext(StyleConfig__Apply_4E2CA0C5(shape.fields[0], ctx.Style), ctx.Definitions);
             area__mut = area_1[0];
             area__1_mut = area_1[1];
             area__2_mut = area_1[2];
             area__3_mut = area_1[3];
             scales__mut = scales_1[0];
             scales__1_mut = scales_1[1];
-            shape_mut = shape_5;
+            shape_mut = shape.fields[1];
             continue Drawing_drawShape;
           }
           case 4: {
             const points = shape.fields[0];
-            const path = toArray(delay(() => append(singleton(new Svg_PathSegment(0, [project(item(0, points))])), delay(() => append(map((pt) => new Svg_PathSegment(1, [project(pt)]), skip(1, points)), delay(() => singleton(new Svg_PathSegment(1, [project(item(0, points))]))))))));
-            return new Svg_Svg(1, [path, Svg_formatStyle(ctx.Definitions, Drawing_hideStroke(ctx.Style))]);
+            return new Svg_Svg(1, [toArray(delay(() => append(singleton(new Svg_PathSegment(0, [project(item(0, points))])), delay(() => append(map((pt) => new Svg_PathSegment(1, [project(pt)]), skip(1, points)), delay(() => singleton(new Svg_PathSegment(1, [project(item(0, points))])))))))), Svg_formatStyle(ctx.Definitions, Drawing_hideStroke(ctx.Style))]);
           }
           case 5: {
-            const pt2 = shape.fields[2];
-            const pt1 = shape.fields[1];
-            const href = shape.fields[0];
-            const patternInput = project(pt1);
+            const patternInput = project(shape.fields[1]);
             const y1_1 = patternInput[1];
             const x1_1 = patternInput[0];
-            const patternInput_1 = project(pt2);
+            const patternInput_1 = project(shape.fields[2]);
             const y2_1 = patternInput_1[1];
             const x2_1 = patternInput_1[0];
-            return new Svg_Svg(0, [href, [min$2(x1_1, x2_1), min$2(y1_1, y2_1)], [Math.abs(x2_1 - x1_1), Math.abs(y2_1 - y1_1)], ctx.Style.PreserveAspectRatio]);
+            return new Svg_Svg(0, [shape.fields[0], [min$2(x1_1, x2_1), min$2(y1_1, y2_1)], [Math.abs(x2_1 - x1_1), Math.abs(y2_1 - y1_1)], ctx.Style.PreserveAspectRatio]);
           }
           case 8: {
-            const t = shape.fields[0][0];
-            const shape_6 = shape.fields[3];
-            const r = shape.fields[0][1];
-            const l = shape.fields[0][3];
             const isy_1 = shape.fields[2];
             const isx_1 = shape.fields[1];
-            const b = shape.fields[0][2];
             const calculateNestedRange = (rev) => ((tupledArg_1) => ((ins) => {
               const v1 = tupledArg_1[0];
               const v2 = tupledArg_1[1];
               return (outs) => {
                 if (ins.tag === 1) {
-                  const vals = ins.fields[0];
-                  const pos_1 = collect((v) => ofArray([Projections_projectOne(rev, v1, v2, outs, new Value(0, [v, 0])), Projections_projectOne(rev, v1, v2, outs, new Value(0, [v, 1]))]), vals);
+                  const pos_1 = collect((v) => ofArray([Projections_projectOne(rev, v1, v2, outs, new Value(0, [v, 0])), Projections_projectOne(rev, v1, v2, outs, new Value(0, [v, 1]))]), ins.fields[0]);
                   return [min(pos_1, {
                     Compare: comparePrimitives
                   }), max(pos_1, {
                     Compare: comparePrimitives
                   })];
                 } else {
-                  const l_1 = ins.fields[0].fields[0];
-                  const h2 = ins.fields[1].fields[0];
-                  const pos = ofArray([Projections_projectOne(rev, v1, v2, outs, new Value(1, [new continuous(l_1)])), Projections_projectOne(rev, v1, v2, outs, new Value(1, [new continuous(h2)]))]);
+                  const pos = ofArray([Projections_projectOne(rev, v1, v2, outs, new Value(1, [new continuous(ins.fields[0].fields[0])])), Projections_projectOne(rev, v1, v2, outs, new Value(1, [new continuous(ins.fields[1].fields[0])]))]);
                   return [min(pos, {
                     Compare: comparePrimitives
                   }), max(pos, {
@@ -4504,48 +4315,31 @@
               };
             }));
             const patternInput_2 = calculateNestedRange(false)([x1, x2])(isx_1)(sx);
-            const x2$0027_1 = patternInput_2[1];
-            const x1$0027_1 = patternInput_2[0];
             const patternInput_3 = calculateNestedRange(true)([y1, y2])(isy_1)(sy);
-            const y2$0027_1 = patternInput_3[1];
-            const y1$0027_1 = patternInput_3[0];
             ctx_mut = ctx;
-            area__mut = x1$0027_1 + l;
-            area__1_mut = y1$0027_1 + t;
-            area__2_mut = x2$0027_1 - r;
-            area__3_mut = y2$0027_1 - b;
+            area__mut = patternInput_2[0] + shape.fields[0][3];
+            area__1_mut = patternInput_3[0] + shape.fields[0][0];
+            area__2_mut = patternInput_2[1] - shape.fields[0][1];
+            area__3_mut = patternInput_3[1] - shape.fields[0][2];
             scales__mut = isx_1;
             scales__1_mut = isy_1;
-            shape_mut = shape_6;
+            shape_mut = shape.fields[3];
             continue Drawing_drawShape;
           }
           case 2: {
             const line = shape.fields[0];
-            const path_1 = Array.from(delay(() => append(singleton(new Svg_PathSegment(0, [project(head(line))])), delay(() => map((pt_1) => new Svg_PathSegment(1, [project(pt_1)]), skip(1, line))))));
-            return new Svg_Svg(1, [path_1, Svg_formatStyle(ctx.Definitions, Drawing_hideFill(ctx.Style))]);
+            return new Svg_Svg(1, [Array.from(delay(() => append(singleton(new Svg_PathSegment(0, [project(head(line))])), delay(() => map((pt_1) => new Svg_PathSegment(1, [project(pt_1)]), skip(1, line)))))), Svg_formatStyle(ctx.Definitions, Drawing_hideFill(ctx.Style))]);
           }
           case 1: {
-            const y_4 = shape.fields[1];
-            const x_4 = shape.fields[0];
             const va = shape.fields[2];
-            const t_1 = shape.fields[5];
-            const r_1 = shape.fields[4];
             const ha = shape.fields[3];
             const va_1 = va.tag === 2 ? "hanging" : va.tag === 1 ? "middle" : "baseline";
             const ha_1 = ha.tag === 1 ? "middle" : ha.tag === 2 ? "end" : "start";
-            const xy = project([x_4, y_4]);
-            return new Svg_Svg(4, [xy, t_1, r_1, toText(printf("alignment-baseline:%s; text-anchor:%s;"))(va_1)(ha_1) + Svg_formatStyle(ctx.Definitions, ctx.Style)]);
+            return new Svg_Svg(4, [project([shape.fields[0], shape.fields[1]]), shape.fields[5], shape.fields[4], toText(printf("alignment-baseline:%s; text-anchor:%s;"))(va_1)(ha_1) + Svg_formatStyle(ctx.Definitions, ctx.Style)]);
           }
-          case 3: {
-            const y_5 = shape.fields[1];
-            const x_5 = shape.fields[0];
-            const ry = shape.fields[3];
-            const rx = shape.fields[2];
-            return new Svg_Svg(2, [project([x_5, y_5]), [rx, ry], Svg_formatStyle(ctx.Definitions, ctx.Style)]);
-          }
+          case 3:
+            return new Svg_Svg(2, [project([shape.fields[0], shape.fields[1]]), [shape.fields[2], shape.fields[3]], Svg_formatStyle(ctx.Definitions, ctx.Style)]);
           case 7: {
-            const shape_7 = shape.fields[3];
-            shape.fields[0];
             ctx_mut = ctx;
             area__mut = area_1[0];
             area__1_mut = area_1[1];
@@ -4553,24 +4347,18 @@
             area__3_mut = area_1[3];
             scales__mut = scales_1[0];
             scales__1_mut = scales_1[1];
-            shape_mut = shape_7;
+            shape_mut = shape.fields[3];
             continue Drawing_drawShape;
           }
           default: {
-            const shape_1 = shape.fields[3];
-            const p2 = shape.fields[1];
-            const p1 = shape.fields[0];
-            const isx = shape.fields[2];
-            const x1$0027 = Projections_projectOneX(x1, x2)(sx)(p1);
-            const x2$0027 = Projections_projectOneX(x1, x2)(sx)(p2);
             ctx_mut = ctx;
-            area__mut = x1$0027;
+            area__mut = Projections_projectOneX(x1, x2)(sx)(shape.fields[0]);
             area__1_mut = y1;
-            area__2_mut = x2$0027;
+            area__2_mut = Projections_projectOneX(x1, x2)(sx)(shape.fields[1]);
             area__3_mut = y2;
-            scales__mut = isx;
+            scales__mut = shape.fields[2];
             scales__1_mut = sy;
-            shape_mut = shape_1;
+            shape_mut = shape.fields[3];
             continue Drawing_drawShape;
           }
         }
@@ -4666,21 +4454,14 @@
       if (v.tag === 1) {
         throw new Error("inScale: Cannot test if continuous value is in categorical scale");
       } else {
-        const cats = s2.fields[0];
-        const v_2 = v.fields[0];
-        return exists((y) => equals(v_2, y), cats);
+        return exists((y) => equals(v.fields[0], y), s2.fields[0]);
       }
     } else if (v.tag === 0) {
       throw new Error("inScale: Cannot test if categorical value is in continuous scale");
+    } else if (v.fields[0].fields[0] >= min$2(s2.fields[0].fields[0], s2.fields[1].fields[0])) {
+      return v.fields[0].fields[0] <= max$2(s2.fields[0].fields[0], s2.fields[1].fields[0]);
     } else {
-      const h2 = s2.fields[1].fields[0];
-      const l = s2.fields[0].fields[0];
-      const v_1 = v.fields[0].fields[0];
-      if (v_1 >= min$2(l, h2)) {
-        return v_1 <= max$2(l, h2);
-      } else {
-        return false;
-      }
+      return false;
     }
   }
   function Events_inScales(sx, sy, event2) {
@@ -4722,32 +4503,28 @@
     Events_triggerEvent:
       while (true) {
         const area_ = area__mut, area__1 = area__1_mut, area__2 = area__2_mut, area__3 = area__3_mut, scales_ = scales__mut, scales__1 = scales__1_mut, shape = shape_mut, jse = jse_mut, event2 = event_mut;
-        const area = [area_, area__1, area__2, area__3];
-        const scales = [scales_, scales__1];
-        const area_1 = area;
+        const area_1 = [area_, area__1, area__2, area__3];
         const y2 = area_1[3];
         const y1 = area_1[1];
         const x2 = area_1[2];
         const x1 = area_1[0];
-        const scales_1 = scales;
+        const scales_1 = [scales_, scales__1];
         const sy = scales_1[1];
         const sx = scales_1[0];
         switch (shape.tag) {
           case 0: {
-            const shape_1 = shape.fields[1];
             area__mut = area_1[0];
             area__1_mut = area_1[1];
             area__2_mut = area_1[2];
             area__3_mut = area_1[3];
             scales__mut = scales_1[0];
             scales__1_mut = scales_1[1];
-            shape_mut = shape_1;
+            shape_mut = shape.fields[1];
             jse_mut = jse;
             event_mut = event2;
             continue Events_triggerEvent;
           }
           case 9: {
-            const shape_2 = shape.fields[1];
             const dy = shape.fields[0][1];
             const dx = shape.fields[0][0];
             area__mut = x1 + dx;
@@ -4756,71 +4533,51 @@
             area__3_mut = y2 + dy;
             scales__mut = scales_1[0];
             scales__1_mut = scales_1[1];
-            shape_mut = shape_2;
+            shape_mut = shape.fields[1];
             jse_mut = jse;
             event_mut = event2;
             continue Events_triggerEvent;
           }
           case 10: {
-            const shape_3 = shape.fields[3];
-            const p2 = shape.fields[1];
-            const p1 = shape.fields[0];
-            const isx = shape.fields[2];
-            const x1$0027 = Projections_projectOneX(x1, x2)(sx)(p1);
-            const x2$0027 = Projections_projectOneX(x1, x2)(sx)(p2);
-            area__mut = x1$0027;
+            area__mut = Projections_projectOneX(x1, x2)(sx)(shape.fields[0]);
             area__1_mut = y1;
-            area__2_mut = x2$0027;
+            area__2_mut = Projections_projectOneX(x1, x2)(sx)(shape.fields[1]);
             area__3_mut = y2;
-            scales__mut = isx;
+            scales__mut = shape.fields[2];
             scales__1_mut = sy;
-            shape_mut = shape_3;
+            shape_mut = shape.fields[3];
             jse_mut = jse;
             event_mut = event2;
             continue Events_triggerEvent;
           }
           case 11: {
-            const shape_4 = shape.fields[3];
-            const p2_1 = shape.fields[1];
-            const p1_1 = shape.fields[0];
-            const isy = shape.fields[2];
-            const y1$0027 = Projections_projectOneY(y1, y2)(sy)(p1_1);
-            const y2$0027 = Projections_projectOneY(y1, y2)(sy)(p2_1);
             area__mut = x1;
-            area__1_mut = y1$0027;
+            area__1_mut = Projections_projectOneY(y1, y2)(sy)(shape.fields[0]);
             area__2_mut = x2;
-            area__3_mut = y2$0027;
+            area__3_mut = Projections_projectOneY(y1, y2)(sy)(shape.fields[1]);
             scales__mut = sx;
-            scales__1_mut = isy;
-            shape_mut = shape_4;
+            scales__1_mut = shape.fields[2];
+            shape_mut = shape.fields[3];
             jse_mut = jse;
             event_mut = event2;
             continue Events_triggerEvent;
           }
           case 8: {
-            const t = shape.fields[0][0];
-            const shape_5 = shape.fields[3];
-            const r = shape.fields[0][1];
-            const l = shape.fields[0][3];
             const isy_1 = shape.fields[2];
             const isx_1 = shape.fields[1];
-            const b = shape.fields[0][2];
             const calculateNestedRange = (rev) => ((tupledArg) => ((ins) => {
               const v1 = tupledArg[0];
               const v2 = tupledArg[1];
               return (outs) => {
                 if (ins.tag === 1) {
-                  const vals = ins.fields[0];
-                  const pos_1 = collect((v) => ofArray([Projections_projectOne(rev, v1, v2, outs, new Value(0, [v, 0])), Projections_projectOne(rev, v1, v2, outs, new Value(0, [v, 1]))]), vals);
+                  const pos_1 = collect((v) => ofArray([Projections_projectOne(rev, v1, v2, outs, new Value(0, [v, 0])), Projections_projectOne(rev, v1, v2, outs, new Value(0, [v, 1]))]), ins.fields[0]);
                   return [min(pos_1, {
                     Compare: comparePrimitives
                   }), max(pos_1, {
                     Compare: comparePrimitives
                   })];
                 } else {
-                  const l_1 = ins.fields[0].fields[0];
-                  const h2 = ins.fields[1].fields[0];
-                  const pos = ofArray([Projections_projectOne(rev, v1, v2, outs, new Value(1, [new continuous(l_1)])), Projections_projectOne(rev, v1, v2, outs, new Value(1, [new continuous(h2)]))]);
+                  const pos = ofArray([Projections_projectOne(rev, v1, v2, outs, new Value(1, [new continuous(ins.fields[0].fields[0])])), Projections_projectOne(rev, v1, v2, outs, new Value(1, [new continuous(ins.fields[1].fields[0])]))]);
                   return [min(pos, {
                     Compare: comparePrimitives
                   }), max(pos, {
@@ -4830,18 +4587,14 @@
               };
             }));
             const patternInput = calculateNestedRange(false)([x1, x2])(isx_1)(sx);
-            const x2$0027_1 = patternInput[1];
-            const x1$0027_1 = patternInput[0];
             const patternInput_1 = calculateNestedRange(true)([y1, y2])(isy_1)(sy);
-            const y2$0027_1 = patternInput_1[1];
-            const y1$0027_1 = patternInput_1[0];
-            area__mut = x1$0027_1 + l;
-            area__1_mut = y1$0027_1 + t;
-            area__2_mut = x2$0027_1 - r;
-            area__3_mut = y2$0027_1 - b;
+            area__mut = patternInput[0] + shape.fields[0][3];
+            area__1_mut = patternInput_1[0] + shape.fields[0][0];
+            area__2_mut = patternInput[1] - shape.fields[0][1];
+            area__3_mut = patternInput_1[1] - shape.fields[0][2];
             scales__mut = isx_1;
             scales__1_mut = isy_1;
-            shape_mut = shape_5;
+            shape_mut = shape.fields[3];
             jse_mut = jse;
             event_mut = event2;
             continue Events_triggerEvent;
@@ -4849,19 +4602,14 @@
           case 6: {
             const shapes = shape.fields[0];
             for (let idx = 0; idx <= shapes.length - 1; idx++) {
-              const shape_6 = item(idx, shapes);
-              Events_triggerEvent(area_1[0], area_1[1], area_1[2], area_1[3], scales_1[0], scales_1[1], shape_6, jse, event2);
+              Events_triggerEvent(area_1[0], area_1[1], area_1[2], area_1[3], scales_1[0], scales_1[1], item(idx, shapes), jse, event2);
             }
             break;
           }
           case 7: {
-            shape.fields[2];
-            shape.fields[1];
-            const shape_7 = shape.fields[3];
-            const handlers = shape.fields[0];
             const localEvent = Events_projectEvent(area_1[0], area_1[1], area_1[2], area_1[3], scales_1[0], scales_1[1], event2);
             if (Events_inScales(scales_1[0], scales_1[1], localEvent)) {
-              const enumerator = getEnumerator(handlers);
+              const enumerator = getEnumerator(shape.fields[0]);
               try {
                 while (enumerator["System.Collections.IEnumerator.MoveNext"]()) {
                   const handler = enumerator["System.Collections.Generic.IEnumerator`1.get_Current"]();
@@ -4980,7 +4728,7 @@
             area__3_mut = area_1[3];
             scales__mut = scales_1[0];
             scales__1_mut = scales_1[1];
-            shape_mut = shape_7;
+            shape_mut = shape.fields[3];
             jse_mut = jse;
             event_mut = event2;
             continue Events_triggerEvent;
@@ -4990,16 +4738,16 @@
       }
   }
   function Derived_PreserveAspectRatio(pa, s2) {
-    return new Shape(1, [(s_1) => new Style(s_1.StrokeColor, s_1.StrokeWidth, s_1.StrokeDashArray, s_1.Fill, s_1.Animation, s_1.Font, s_1.Cursor, pa, s_1.FormatAxisXLabel, s_1.FormatAxisYLabel), s2]);
+    return new Shape(1, [new StyleConfig(4, [pa]), s2]);
   }
   function Derived_StrokeColor(clr, s2) {
-    return new Shape(1, [(s_1) => new Style([1, new Color(1, [clr])], s_1.StrokeWidth, s_1.StrokeDashArray, s_1.Fill, s_1.Animation, s_1.Font, s_1.Cursor, s_1.PreserveAspectRatio, s_1.FormatAxisXLabel, s_1.FormatAxisYLabel), s2]);
+    return new Shape(1, [new StyleConfig(2, [clr]), s2]);
   }
   function Derived_FillColor(clr, s2) {
-    return new Shape(1, [(s_1) => new Style(s_1.StrokeColor, s_1.StrokeWidth, s_1.StrokeDashArray, new FillStyle(0, [[1, new Color(1, [clr])]]), s_1.Animation, s_1.Font, s_1.Cursor, s_1.PreserveAspectRatio, s_1.FormatAxisXLabel, s_1.FormatAxisYLabel), s2]);
+    return new Shape(1, [new StyleConfig(1, [clr]), s2]);
   }
   function Derived_Font(font, clr, s2) {
-    return new Shape(1, [(s_1) => new Style([0, new Color(1, [clr])], s_1.StrokeWidth, s_1.StrokeDashArray, new FillStyle(0, [[1, new Color(1, [clr])]]), s_1.Animation, font, s_1.Cursor, s_1.PreserveAspectRatio, s_1.FormatAxisXLabel, s_1.FormatAxisYLabel), s2]);
+    return new Shape(1, [new StyleConfig(3, [font, clr]), s2]);
   }
   function Derived_Bar(x, y) {
     return new Shape(9, [delay(() => append(singleton([new Value(1, [x]), new Value(0, [y, 0])]), delay(() => append(singleton([new Value(1, [x]), new Value(0, [y, 1])]), delay(() => append(singleton([new Value(1, [new continuous(0)]), new Value(0, [y, 1])]), delay(() => singleton([new Value(1, [new continuous(0)]), new Value(0, [y, 0])]))))))))]);
@@ -5020,8 +4768,7 @@
       try {
         while (enumerator["System.Collections.IEnumerator.MoveNext"]()) {
           const i_1 = enumerator["System.Collections.Generic.IEnumerator`1.get_Current"]() | 0;
-          const j = before.length - i_1 | 0;
-          if (i_1 !== 0 && j % 3 === 0) {
+          if (i_1 !== 0 && (before.length - i_1) % 3 === 0) {
             res = insert(res, i_1, ",");
           }
         }
@@ -5037,19 +4784,10 @@
   }
   function Compost_defaultFormat(scale2, value2) {
     if (value2.tag === 1) {
-      const v = value2.fields[0].fields[0];
-      let dec;
-      if (scale2.tag === 0) {
-        const l = scale2.fields[0].fields[0];
-        const h2 = scale2.fields[1].fields[0];
-        dec = Scales_decimalPoints(l, h2);
-      } else {
-        dec = 0;
-      }
-      return Compost_niceNumber(round(v, ~~dec), ~~dec);
+      const dec = scale2.tag === 0 ? Scales_decimalPoints(scale2.fields[0].fields[0], scale2.fields[1].fields[0]) : 0;
+      return Compost_niceNumber(round(value2.fields[0].fields[0], ~~dec), ~~dec);
     } else {
-      const s2 = value2.fields[0].fields[0];
-      return s2;
+      return value2.fields[0].fields[0];
     }
   }
   const Compost_defstyle = new Style([1, new Color(0, [256, 0, 0])], new Width(2), [], new FillStyle(0, [[1, new Color(0, [196, 196, 196])]]), void 0, "10pt sans-serif", "default", "", Compost_defaultFormat, Compost_defaultFormat);
@@ -5108,36 +4846,28 @@
     const mouseHandler = (kind, el, evt) => {
       const evt_1 = evt;
       const patternInput_1 = Compost_getRelativeLocation(el, evt_1.pageX, evt_1.pageY);
-      const y = patternInput_1[1];
-      const x = patternInput_1[0];
-      triggerEvent(evt_1, new Events_InteractiveEvent(0, [kind, [new Value(1, [new continuous(x)]), new Value(1, [new continuous(y)])]]));
+      triggerEvent(evt_1, new Events_InteractiveEvent(0, [kind, [new Value(1, [new continuous(patternInput_1[0])]), new Value(1, [new continuous(patternInput_1[1])])]]));
     };
     const touchHandler = (kind_1, el_1, evt_2) => {
       const evt_3 = evt_2;
       const touch = item(0, evt_3.touches);
       const patternInput_2 = Compost_getRelativeLocation(el_1, touch.pageX, touch.pageY);
-      const y_1 = patternInput_2[1];
-      const x_1 = patternInput_2[0];
-      triggerEvent(evt_3, new Events_InteractiveEvent(1, [kind_1, [new Value(1, [new continuous(x_1)]), new Value(1, [new continuous(y_1)])]]));
+      triggerEvent(evt_3, new Events_InteractiveEvent(1, [kind_1, [new Value(1, [new continuous(patternInput_2[0])]), new Value(1, [new continuous(patternInput_2[1])])]]));
     };
     return El_op_Dynamic_Z451691CD(h, "div")(empty$1())(singleton$1(El_op_Dynamic_Z451691CD(s, "svg")(ofArray([op_EqualsGreater("style", "overflow:visible"), op_EqualsGreater("width", int32ToString(~~width)), op_EqualsGreater("height", int32ToString(~~height)), op_EqualsBangGreater("click", uncurry2(curry3(mouseHandler)(new Events_MouseEventKind(0, [])))), op_EqualsBangGreater("mousemove", uncurry2(curry3(mouseHandler)(new Events_MouseEventKind(1, [])))), op_EqualsBangGreater("mousedown", uncurry2(curry3(mouseHandler)(new Events_MouseEventKind(3, [])))), op_EqualsBangGreater("mouseup", uncurry2(curry3(mouseHandler)(new Events_MouseEventKind(2, [])))), op_EqualsBangGreater("mouseleave", (_arg, evt_4) => {
       triggerEvent(evt_4, new Events_InteractiveEvent(3, []));
     }), op_EqualsBangGreater("touchmove", uncurry2(curry3(touchHandler)(new Events_TouchEventKind(0, [])))), op_EqualsBangGreater("touchstart", uncurry2(curry3(touchHandler)(new Events_TouchEventKind(1, [])))), op_EqualsBangGreater("touchend", (_arg_1, evt_5) => {
       triggerEvent(evt_5, new Events_InteractiveEvent(2, []));
     })]))(toList(delay(() => {
-      const renderCtx = new Svg_RenderingContext(defs);
-      const body = Array.from(Svg_renderSvg(renderCtx, svg));
+      const body = Array.from(Svg_renderSvg(new Svg_RenderingContext(defs), svg));
       return append(defs, delay(() => body));
     })))));
   }
   function Helpers_formatValue(v) {
     if (v.tag === 1) {
-      const v_1 = v.fields[0].fields[0];
-      return v_1;
+      return v.fields[0].fields[0];
     } else {
-      const r = v.fields[1];
-      const c = v.fields[0].fields[0];
-      return [c, r];
+      return [v.fields[0].fields[0], v.fields[1]];
     }
   }
   function Helpers_parseValue(v) {
@@ -5154,6 +4884,268 @@
       return new Value(0, [new categorical(item(0, a)), item(1, a)]);
     } else {
       return toFail(printf("Cannot parse value: %A. Expected a number or an array with two elements."))(v);
+    }
+  }
+  function Serialization_serValue() {
+    return Helpers_formatValue;
+  }
+  function Serialization_deserValue() {
+    return Helpers_parseValue;
+  }
+  function Serialization_serializeVerticalAlign(_arg) {
+    switch (_arg.tag) {
+      case 1:
+        return "middle";
+      case 2:
+        return "hanging";
+      default:
+        return "baseline";
+    }
+  }
+  function Serialization_deserializeVerticalAlign(_arg) {
+    switch (_arg) {
+      case "baseline":
+        return new VerticalAlign(0, []);
+      case "hanging":
+        return new VerticalAlign(2, []);
+      default:
+        return new VerticalAlign(1, []);
+    }
+  }
+  function Serialization_serializeHorizontalAlign(_arg) {
+    switch (_arg.tag) {
+      case 1:
+        return "center";
+      case 2:
+        return "end";
+      default:
+        return "start";
+    }
+  }
+  function Serialization_deserializeHorizontalAlign(_arg) {
+    switch (_arg) {
+      case "start":
+        return new HorizontalAlign(0, []);
+      case "end":
+        return new HorizontalAlign(2, []);
+      default:
+        return new HorizontalAlign(1, []);
+    }
+  }
+  function Serialization_serializeScale(_arg) {
+    if (_arg.tag === 1) {
+      return {
+        kind: "categorical",
+        cats: toArray(delay(() => collect((matchValue) => singleton(matchValue.fields[0]), _arg.fields[0])))
+      };
+    } else {
+      return {
+        kind: "continuous",
+        lo: _arg.fields[0].fields[0],
+        hi: _arg.fields[1].fields[0]
+      };
+    }
+  }
+  function Serialization_deserializeScale(o) {
+    const matchValue = o["kind"];
+    switch (matchValue) {
+      case "continuous":
+        return new Scale(0, [new continuous(o["lo"]), new continuous(o["hi"])]);
+      case "categorical":
+        return new Scale(1, [toArray(delay(() => map((c) => new categorical(c), o["cats"])))]);
+      default:
+        return toFail(printf("Unknown scale kind: %s"))(matchValue);
+    }
+  }
+  function Serialization_serializeStyleConfig(_arg) {
+    switch (_arg.tag) {
+      case 2:
+        return {
+          kind: "stroke",
+          color: _arg.fields[0]
+        };
+      case 3:
+        return {
+          kind: "font",
+          font: _arg.fields[0],
+          color: _arg.fields[1]
+        };
+      case 4:
+        return {
+          kind: "aspect",
+          value: _arg.fields[0]
+        };
+      case 0:
+        throw new Error("Cannot serialize Custom style config");
+      default:
+        return {
+          kind: "fill",
+          color: _arg.fields[0]
+        };
+    }
+  }
+  function Serialization_deserializeStyleConfig(o) {
+    const matchValue = o["kind"];
+    switch (matchValue) {
+      case "fill":
+        return new StyleConfig(1, [o["color"]]);
+      case "stroke":
+        return new StyleConfig(2, [o["color"]]);
+      case "font":
+        return new StyleConfig(3, [o["font"], o["color"]]);
+      case "aspect":
+        return new StyleConfig(4, [o["value"]]);
+      default:
+        return toFail(printf("Unknown style config kind: %s"))(matchValue);
+    }
+  }
+  function Serialization_serializePoints(pts) {
+    return toArray(delay(() => collect((matchValue) => singleton([Serialization_serValue()(matchValue[0]), Serialization_serValue()(matchValue[1])]), pts)));
+  }
+  function Serialization_serializeShape(s2) {
+    switch (s2.tag) {
+      case 9:
+        return {
+          kind: "shape",
+          points: Serialization_serializePoints(ofSeq$1(s2.fields[0]))
+        };
+      case 8:
+        return {
+          kind: "bubble",
+          x: Serialization_serValue()(s2.fields[0]),
+          y: Serialization_serValue()(s2.fields[1]),
+          w: s2.fields[2],
+          h: s2.fields[3]
+        };
+      case 2:
+        return {
+          kind: "text",
+          x: Serialization_serValue()(s2.fields[0]),
+          y: Serialization_serValue()(s2.fields[1]),
+          valign: Serialization_serializeVerticalAlign(s2.fields[2]),
+          halign: Serialization_serializeHorizontalAlign(s2.fields[3]),
+          rotation: s2.fields[4],
+          text: s2.fields[5]
+        };
+      case 0:
+        return {
+          kind: "image",
+          href: s2.fields[0],
+          p1: [Serialization_serValue()(s2.fields[1][0]), Serialization_serValue()(s2.fields[1][1])],
+          p2: [Serialization_serValue()(s2.fields[2][0]), Serialization_serValue()(s2.fields[2][1])]
+        };
+      case 10:
+        return {
+          kind: "layered",
+          shapes: toArray(delay(() => map(Serialization_serializeShape, s2.fields[0])))
+        };
+      case 11:
+        return {
+          kind: "axes",
+          axes: join(" ", toList(delay(() => append(s2.fields[0] ? singleton("top") : empty(), delay(() => append(s2.fields[1] ? singleton("right") : empty(), delay(() => append(s2.fields[2] ? singleton("bottom") : empty(), delay(() => s2.fields[3] ? singleton("left") : empty()))))))))),
+          shape: Serialization_serializeShape(s2.fields[4])
+        };
+      case 13:
+        return {
+          kind: "padding",
+          top: s2.fields[0][0],
+          right: s2.fields[0][1],
+          bottom: s2.fields[0][2],
+          left: s2.fields[0][3],
+          shape: Serialization_serializeShape(s2.fields[1])
+        };
+      case 5:
+        return {
+          kind: "nestx",
+          lx: Serialization_serValue()(s2.fields[0]),
+          hx: Serialization_serValue()(s2.fields[1]),
+          shape: Serialization_serializeShape(s2.fields[2])
+        };
+      case 6:
+        return {
+          kind: "nesty",
+          ly: Serialization_serValue()(s2.fields[0]),
+          hy: Serialization_serValue()(s2.fields[1]),
+          shape: Serialization_serializeShape(s2.fields[2])
+        };
+      case 4: {
+        const sy = s2.fields[1];
+        const sx = s2.fields[0];
+        return {
+          kind: "scale",
+          sx: sx == null ? defaultOf() : Serialization_serializeScale(sx),
+          sy: sy == null ? defaultOf() : Serialization_serializeScale(sy),
+          shape: Serialization_serializeShape(s2.fields[2])
+        };
+      }
+      case 1:
+        return {
+          kind: "styled",
+          param: Serialization_serializeStyleConfig(s2.fields[0]),
+          shape: Serialization_serializeShape(s2.fields[1])
+        };
+      case 3:
+        return {
+          kind: "autoscale",
+          x: s2.fields[0],
+          y: s2.fields[1],
+          shape: Serialization_serializeShape(s2.fields[2])
+        };
+      case 14:
+        return {
+          kind: "offset",
+          dx: s2.fields[0][0],
+          dy: s2.fields[0][1],
+          shape: Serialization_serializeShape(s2.fields[1])
+        };
+      case 12:
+        throw new Error("Cannot serialize Interactive shapes");
+      default:
+        return {
+          kind: "line",
+          points: Serialization_serializePoints(ofSeq$1(s2.fields[0]))
+        };
+    }
+  }
+  function Serialization_deserializeShape(o) {
+    const matchValue = o["kind"];
+    switch (matchValue) {
+      case "line":
+        return new Shape(7, [toList(delay(() => map((p) => [Serialization_deserValue()(item(0, p)), Serialization_deserValue()(item(1, p))], o["points"])))]);
+      case "shape":
+        return new Shape(9, [toList(delay(() => map((p_1) => [Serialization_deserValue()(item(0, p_1)), Serialization_deserValue()(item(1, p_1))], o["points"])))]);
+      case "bubble":
+        return new Shape(8, [Serialization_deserValue()(o["x"]), Serialization_deserValue()(o["y"]), o["w"], o["h"]]);
+      case "text":
+        return new Shape(2, [Serialization_deserValue()(o["x"]), Serialization_deserValue()(o["y"]), Serialization_deserializeVerticalAlign(o["valign"]), Serialization_deserializeHorizontalAlign(o["halign"]), o["rotation"], o["text"]]);
+      case "image": {
+        const matchValue_1 = o["p1"];
+        const p2 = o["p2"];
+        const p1 = matchValue_1;
+        return new Shape(0, [o["href"], [Serialization_deserValue()(item(0, p1)), Serialization_deserValue()(item(1, p1))], [Serialization_deserValue()(item(0, p2)), Serialization_deserValue()(item(1, p2))]]);
+      }
+      case "layered":
+        return new Shape(10, [toList(delay(() => map(Serialization_deserializeShape, o["shapes"])))]);
+      case "axes": {
+        const a = o["axes"];
+        return new Shape(11, [a.indexOf("top") >= 0, a.indexOf("right") >= 0, a.indexOf("bottom") >= 0, a.indexOf("left") >= 0, Serialization_deserializeShape(o["shape"])]);
+      }
+      case "padding":
+        return new Shape(13, [[o["top"], o["right"], o["bottom"], o["left"]], Serialization_deserializeShape(o["shape"])]);
+      case "nestx":
+        return new Shape(5, [Serialization_deserValue()(o["lx"]), Serialization_deserValue()(o["hx"]), Serialization_deserializeShape(o["shape"])]);
+      case "nesty":
+        return new Shape(6, [Serialization_deserValue()(o["ly"]), Serialization_deserValue()(o["hy"]), Serialization_deserializeShape(o["shape"])]);
+      case "scale":
+        return new Shape(4, [equals(o["sx"], defaultOf()) ? void 0 : Serialization_deserializeScale(o["sx"]), equals(o["sy"], defaultOf()) ? void 0 : Serialization_deserializeScale(o["sy"]), Serialization_deserializeShape(o["shape"])]);
+      case "styled":
+        return new Shape(1, [Serialization_deserializeStyleConfig(o["param"]), Serialization_deserializeShape(o["shape"])]);
+      case "autoscale":
+        return new Shape(3, [o["x"], o["y"], Serialization_deserializeShape(o["shape"])]);
+      case "offset":
+        return new Shape(14, [[o["dx"], o["dy"]], Serialization_deserializeShape(o["shape"])]);
+      default:
+        return toFail(printf("Unknown shape kind: %s"))(matchValue);
     }
   }
   const scale = {
@@ -5236,56 +5228,23 @@
         f_2 = ((args) => {
           f_1(...args);
         });
-        switch (k) {
-          case "mousedown":
-            return new EventHandler(2, [(me, tupledArg) => {
-              const x_21 = tupledArg[0];
-              const y = tupledArg[1];
-              f_2([Helpers_formatValue(x_21), Helpers_formatValue(y), me]);
-            }]);
-          case "mouseup":
-            return new EventHandler(1, [(me_1, tupledArg_1) => {
-              const x_22 = tupledArg_1[0];
-              const y_1 = tupledArg_1[1];
-              f_2([Helpers_formatValue(x_22), Helpers_formatValue(y_1), me_1]);
-            }]);
-          case "mousemove":
-            return new EventHandler(0, [(me_2, tupledArg_2) => {
-              const x_23 = tupledArg_2[0];
-              const y_2 = tupledArg_2[1];
-              f_2([Helpers_formatValue(x_23), Helpers_formatValue(y_2), me_2]);
-            }]);
-          case "touchstart":
-            return new EventHandler(4, [(me_3, tupledArg_3) => {
-              const x_24 = tupledArg_3[0];
-              const y_3 = tupledArg_3[1];
-              f_2([Helpers_formatValue(x_24), Helpers_formatValue(y_3), me_3]);
-            }]);
-          case "touchmove":
-            return new EventHandler(5, [(me_4, tupledArg_4) => {
-              const x_25 = tupledArg_4[0];
-              const y_4 = tupledArg_4[1];
-              f_2([Helpers_formatValue(x_25), Helpers_formatValue(y_4), me_4]);
-            }]);
-          case "click":
-            return new EventHandler(3, [(me_5, tupledArg_5) => {
-              const x_26 = tupledArg_5[0];
-              const y_5 = tupledArg_5[1];
-              f_2([Helpers_formatValue(x_26), Helpers_formatValue(y_5), me_5]);
-            }]);
-          case "mouseleave":
-            return new EventHandler(7, [(me_6) => {
-              f_2([me_6]);
-            }]);
-          case "touchend":
-            return new EventHandler(6, [(me_7) => {
-              f_2([me_7]);
-            }]);
-          default: {
-            const s_12 = k;
-            return toFail(printf("Unsupported event type '%s' passed to the 'on' primitive."))(s_12);
-          }
-        }
+        return k === "mousedown" ? new EventHandler(2, [(me, tupledArg) => {
+          f_2([Helpers_formatValue(tupledArg[0]), Helpers_formatValue(tupledArg[1]), me]);
+        }]) : k === "mouseup" ? new EventHandler(1, [(me_1, tupledArg_1) => {
+          f_2([Helpers_formatValue(tupledArg_1[0]), Helpers_formatValue(tupledArg_1[1]), me_1]);
+        }]) : k === "mousemove" ? new EventHandler(0, [(me_2, tupledArg_2) => {
+          f_2([Helpers_formatValue(tupledArg_2[0]), Helpers_formatValue(tupledArg_2[1]), me_2]);
+        }]) : k === "touchstart" ? new EventHandler(4, [(me_3, tupledArg_3) => {
+          f_2([Helpers_formatValue(tupledArg_3[0]), Helpers_formatValue(tupledArg_3[1]), me_3]);
+        }]) : k === "touchmove" ? new EventHandler(5, [(me_4, tupledArg_4) => {
+          f_2([Helpers_formatValue(tupledArg_4[0]), Helpers_formatValue(tupledArg_4[1]), me_4]);
+        }]) : k === "click" ? new EventHandler(3, [(me_5, tupledArg_5) => {
+          f_2([Helpers_formatValue(tupledArg_5[0]), Helpers_formatValue(tupledArg_5[1]), me_5]);
+        }]) : k === "mouseleave" ? new EventHandler(7, [(me_6) => {
+          f_2([me_6]);
+        }]) : k === "touchend" ? new EventHandler(6, [(me_7) => {
+          f_2([me_7]);
+        }]) : toFail(printf("Unsupported event type '%s' passed to the 'on' primitive."))(k);
       }, Object.keys(o)))), s_11]);
     },
     svg(w_1, h_12, shape) {
@@ -5308,7 +5267,7 @@
       return new DomNode(1, [defaultOf(), tag, attrs_1, children_1]);
     },
     interactive(id, init, update, render2) {
-      const render_1 = (t_2, s_13) => {
+      createVirtualDomApp(id, init, (t_2, s_13) => {
         const el = document.getElementById(id);
         const res = render2(t_2, s_13);
         if (equals(res["constructor"], new DomNode(0, [""])["constructor"])) {
@@ -5316,13 +5275,27 @@
         } else {
           return Compost_createSvg(false, false, el.clientWidth, el.clientHeight, res);
         }
-      };
-      createVirtualDomApp(id, init, render_1, update);
+      }, update);
     },
     render(id_1, viz) {
       const el_1 = document.getElementById(id_1);
-      const svg = Compost_createSvg(false, false, el_1.clientWidth, el_1.clientHeight, viz);
-      renderTo(el_1, svg);
+      renderTo(el_1, Compost_createSvg(false, false, el_1.clientWidth, el_1.clientHeight, viz));
+    },
+    foldDom(f_3, acc, node) {
+      return foldDom((acc_1, _ns, tag_1, attrs_3) => f_3(acc_1, tag_1, createObj(toArray(delay(() => collect((matchValue) => {
+        const matchValue_1 = matchValue[1];
+        if (matchValue_1.tag === 1) {
+          return singleton([matchValue[0], matchValue_1.fields[0]]);
+        } else {
+          return empty();
+        }
+      }, attrs_3))))), acc, node);
+    },
+    serialize(s_15) {
+      return Serialization_serializeShape(s_15);
+    },
+    deserialize(o_1) {
+      return Serialization_deserializeShape(o_1);
     }
   };
   window.c = compost;
