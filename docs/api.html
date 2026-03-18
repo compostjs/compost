@@ -135,6 +135,8 @@ let s1 = [ [["Labour", 0], 0], [["Labour", 0], 152],
       <h2>Compost primitives: Rendering charts and interactivity<a name="c-inter"></a></h2>
       <table class="docs">
       <tr><th>c.render</th><td><code class="f">string * Shape -> unit</code><p>Render a given chart on a HTML element specified by a given ID. When called, Compost will get the width and height of the element and render a chart using this as the size.</p></td></tr>
+      <tr><th>c.serialize</th><td><code class="f">Shape -> obj</code><p>Serialize a shape to a plain JavaScript object that can be stored as JSON or passed between contexts. Shapes with <code>c.on</code> event handlers or custom style functions cannot be serialized.</p></td></tr>
+      <tr><th>c.deserialize</th><td><code class="f">obj -> Shape</code><p>Reconstruct a shape from a plain JavaScript object previously produced by <code>c.serialize</code>.</p></td></tr>
       <tr><th>c.on</th><td><code class="f">Handlers * Shape -> Shape</code><p>
         Specify event handlers for events that occur in the specified shape. The first parameter is a JavaScript object with fields
         representing individual handlers. The supported handlers are <code>mousedown</code>, <code>mouseup</code>, <code>mousemove</code>, <code>click</code>,

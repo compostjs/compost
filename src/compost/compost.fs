@@ -25,7 +25,127 @@ open Helpers
 type Scale = Compost.Scale<1>
 type Shape = Compost.Shape<1, 1>
 
-type JsScale = 
+module Serialization =
+  open Common
+
+  let private serValue = formatValue
+  let private deserValue = parseValue
+
+  let private serializeVerticalAlign = function
+    | Baseline -> "baseline" | Middle -> "middle" | Hanging -> "hanging"
+  let private deserializeVerticalAlign = function
+    | "baseline" -> Baseline | "hanging" -> Hanging | _ -> Middle
+
+  let private serializeHorizontalAlign = function
+    | Start -> "start" | Center -> "center" | End -> "end"
+  let private deserializeHorizontalAlign = function
+    | "start" -> Start | "end" -> End | _ -> Center
+
+  let private serializeScale = function
+    | Continuous(CO lo, CO hi) -> createObj [| "kind", box "continuous"; "lo", box lo; "hi", box hi |]
+    | Categorical cats -> createObj [| "kind", box "categorical"; "cats", box [| for CA c in cats -> box c |] |]
+
+  let private deserializeScale (o:obj) =
+    match o?kind with
+    | "continuous" -> Continuous(CO(o?lo), CO(o?hi))
+    | "categorical" -> Categorical [| for c in (o?cats : string[]) -> CA c |]
+    | k -> failwithf "Unknown scale kind: %s" k
+
+  let private serializeStyleConfig = function
+    | StyleConfig.FillColor c -> createObj [| "kind", box "fill"; "color", box c |]
+    | StyleConfig.StrokeColor c -> createObj [| "kind", box "stroke"; "color", box c |]
+    | StyleConfig.Font(f, c) -> createObj [| "kind", box "font"; "font", box f; "color", box c |]
+    | StyleConfig.PreserveAspectRatio pa -> createObj [| "kind", box "aspect"; "value", box pa |]
+    | StyleConfig.Custom _ -> failwith "Cannot serialize Custom style config"
+
+  let private deserializeStyleConfig (o:obj) =
+    match o?kind with
+    | "fill" -> StyleConfig.FillColor(o?color)
+    | "stroke" -> StyleConfig.StrokeColor(o?color)
+    | "font" -> StyleConfig.Font(o?font, o?color)
+    | "aspect" -> StyleConfig.PreserveAspectRatio(o?value)
+    | k -> failwithf "Unknown style config kind: %s" k
+
+  let private serializePoints pts =
+    box [| for x, y in pts -> box [| serValue x; serValue y |] |]
+
+  let rec serializeShape (s: Shape) : obj =
+    match s with
+    | Shape.Line pts ->
+        createObj [| "kind", box "line"; "points", serializePoints (List.ofSeq pts) |]
+    | Shape.Shape pts ->
+        createObj [| "kind", box "shape"; "points", serializePoints (List.ofSeq pts) |]
+    | Shape.Bubble(x, y, w, h) ->
+        createObj [| "kind", box "bubble"; "x", serValue x; "y", serValue y; "w", box w; "h", box h |]
+    | Shape.Text(x, y, va, ha, r, t) ->
+        createObj [| "kind", box "text"; "x", serValue x; "y", serValue y
+                     "valign", box (serializeVerticalAlign va); "halign", box (serializeHorizontalAlign ha)
+                     "rotation", box r; "text", box t |]
+    | Shape.Image(href, (x1, y1), (x2, y2)) ->
+        createObj [| "kind", box "image"; "href", box href
+                     "p1", box [| serValue x1; serValue y1 |]; "p2", box [| serValue x2; serValue y2 |] |]
+    | Shape.Layered shapes ->
+        createObj [| "kind", box "layered"; "shapes", box [| for s in shapes -> serializeShape s |] |]
+    | Shape.Axes(t, r, b, l, s) ->
+        let flags = [
+          if t then yield "top"
+          if r then yield "right"
+          if b then yield "bottom"
+          if l then yield "left" ]
+        let a = String.concat " " flags
+        createObj [| "kind", box "axes"; "axes", box a; "shape", serializeShape s |]
+    | Shape.Padding((t, r, b, l), s) ->
+        createObj [| "kind", box "padding"; "top", box t; "right", box r; "bottom", box b; "left", box l; "shape", serializeShape s |]
+    | Shape.NestX(lx, hx, s) ->
+        createObj [| "kind", box "nestx"; "lx", serValue lx; "hx", serValue hx; "shape", serializeShape s |]
+    | Shape.NestY(ly, hy, s) ->
+        createObj [| "kind", box "nesty"; "ly", serValue ly; "hy", serValue hy; "shape", serializeShape s |]
+    | Shape.InnerScale(sx, sy, s) ->
+        createObj [| "kind", box "scale"
+                     "sx", (match sx with Some sc -> serializeScale sc | None -> box null)
+                     "sy", (match sy with Some sc -> serializeScale sc | None -> box null)
+                     "shape", serializeShape s |]
+    | Shape.Style(sc, s) ->
+        createObj [| "kind", box "styled"; "param", serializeStyleConfig sc; "shape", serializeShape s |]
+    | Shape.AutoScale(x, y, s) ->
+        createObj [| "kind", box "autoscale"; "x", box x; "y", box y; "shape", serializeShape s |]
+    | Shape.Offset((dx, dy), s) ->
+        createObj [| "kind", box "offset"; "dx", box dx; "dy", box dy; "shape", serializeShape s |]
+    | Shape.Interactive _ ->
+        failwith "Cannot serialize Interactive shapes"
+
+  let rec deserializeShape (o: obj) : Shape =
+    match o?kind with
+    | "line" -> Shape.Line [ for p in (o?points : obj[][]) -> deserValue p.[0], deserValue p.[1] ]
+    | "shape" -> Shape.Shape [ for p in (o?points : obj[][]) -> deserValue p.[0], deserValue p.[1] ]
+    | "bubble" -> Shape.Bubble(deserValue(o?x), deserValue(o?y), o?w, o?h)
+    | "text" ->
+        Shape.Text(deserValue(o?x), deserValue(o?y),
+          deserializeVerticalAlign(o?valign), deserializeHorizontalAlign(o?halign),
+          o?rotation, o?text)
+    | "image" ->
+        let p1, p2 = (o?p1 : obj[]), (o?p2 : obj[])
+        Shape.Image(o?href, (deserValue p1.[0], deserValue p1.[1]), (deserValue p2.[0], deserValue p2.[1]))
+    | "layered" -> Shape.Layered [ for s in (o?shapes : obj[]) -> deserializeShape s ]
+    | "axes" ->
+        let a = (o?axes : string)
+        Shape.Axes(a.Contains("top"), a.Contains("right"), a.Contains("bottom"), a.Contains("left"), deserializeShape(o?shape))
+    | "padding" ->
+        Shape.Padding((o?top, o?right, o?bottom, o?left), deserializeShape(o?shape))
+    | "nestx" -> Shape.NestX(deserValue(o?lx), deserValue(o?hx), deserializeShape(o?shape))
+    | "nesty" -> Shape.NestY(deserValue(o?ly), deserValue(o?hy), deserializeShape(o?shape))
+    | "scale" ->
+        let sx = if box (o?sx) = null then None else Some(deserializeScale(o?sx))
+        let sy = if box (o?sy) = null then None else Some(deserializeScale(o?sy))
+        Shape.InnerScale(sx, sy, deserializeShape(o?shape))
+    | "styled" -> Shape.Style(deserializeStyleConfig(o?param), deserializeShape(o?shape))
+    | "autoscale" -> Shape.AutoScale(o?x, o?y, deserializeShape(o?shape))
+    | "offset" -> Shape.Offset((o?dx, o?dy), deserializeShape(o?shape))
+    | k -> failwithf "Unknown shape kind: %s" k
+
+open Serialization
+
+type JsScale =
   abstract continuous : float * float -> Scale
   abstract categorical : string[] -> Scale
 
@@ -56,6 +176,8 @@ type JsCompost =
   abstract html : string * obj * DomNode[] -> DomNode
   abstract interactive<'e, 's> : string * 's * ('s -> 'e -> 's) * (('e -> unit) -> 's -> Shape) -> unit
   abstract foldDom : (obj -> string -> obj -> obj) * obj * DomNode -> obj
+  abstract serialize : Shape -> obj
+  abstract deserialize : obj -> Shape
 
 let scale = 
   { new JsScale with 
@@ -136,4 +258,6 @@ let compost =
       member x.foldDom(f, acc, node) =
         let toAttrObj (attrs:(string * DomAttribute)[]) =
           createObj [| for k, v in attrs do match v with Attribute s -> yield k, box s | _ -> () |]
-        Html.foldDom (fun acc _ns tag attrs -> f acc tag (toAttrObj attrs)) acc node }
+        Html.foldDom (fun acc _ns tag attrs -> f acc tag (toAttrObj attrs)) acc node
+      member x.serialize(s) = serializeShape s
+      member x.deserialize(o) = deserializeShape o }

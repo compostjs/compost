@@ -49,7 +49,22 @@ type Style =
     FormatAxisXLabel : Scale<1> -> Value<1> -> string
     FormatAxisYLabel : Scale<1> -> Value<1> -> string }
 
-type EventHandler<[<Measure>] 'vx, [<Measure>] 'vy> = 
+type StyleConfig =
+  | Custom of (Style -> Style)
+  | FillColor of string
+  | StrokeColor of string
+  | Font of string * string
+  | PreserveAspectRatio of string
+
+  member this.Apply(style) =
+    match this with
+    | Custom f -> f style
+    | FillColor clr -> { style with Fill = Solid(1.0, HTML clr) }
+    | StrokeColor clr -> { style with StrokeColor = (1.0, HTML clr) }
+    | Font(font, clr) -> { style with Fill = Solid(1.0, HTML clr); StrokeColor = (0.0, HTML clr); Font = font }
+    | PreserveAspectRatio pa -> { style with PreserveAspectRatio = pa }
+
+type EventHandler<[<Measure>] 'vx, [<Measure>] 'vy> =
   | MouseMove of (MouseEvent -> (Value<'vx> * Value<'vy>) -> unit)
   | MouseUp of (MouseEvent -> (Value<'vx> * Value<'vy>) -> unit)
   | MouseDown of (MouseEvent -> (Value<'vx> * Value<'vy>) -> unit)
@@ -65,7 +80,7 @@ type Orientation =
 
 type Shape<[<Measure>] 'vx, [<Measure>] 'vy> = 
   | Image of string * (Value<'vx> * Value<'vy>) * (Value<'vx> * Value<'vy>)
-  | Style of (Style -> Style) * Shape<'vx, 'vy>
+  | Style of StyleConfig * Shape<'vx, 'vy>
   | Text of Value<'vx> * Value<'vy> * VerticalAlign * HorizontalAlign * float * string
   | AutoScale of bool * bool * Shape<'vx, 'vy>
   | InnerScale of option<Scale<'vx>> * option<Scale<'vy>> * Shape<'vx, 'vy>
@@ -210,7 +225,7 @@ module Svg =
 module Scales = 
 
   type ScaledShape<[<Measure>] 'vx, [<Measure>] 'vy> = 
-    | ScaledStyle of (Style -> Style) * ScaledShape<'vx, 'vy>
+    | ScaledStyle of StyleConfig * ScaledShape<'vx, 'vy>
     | ScaledText of Value<'vx> * Value<'vy> * VerticalAlign * HorizontalAlign * float * string    
     | ScaledLine of (Value<'vx> * Value<'vy>)[]
     | ScaledBubble of Value<'vx> * Value<'vy> * float * float
@@ -303,9 +318,9 @@ module Scales =
     let calculateScalesStyle = calculateScales 
     let calculateScales = calculateScales style
     match shape with
-    | Style(f, shape) ->
-        let scales, shape = calculateScalesStyle (f style) shape
-        scales, ScaledStyle(f, shape)
+    | Style(sc, shape) ->
+        let scales, shape = calculateScalesStyle (sc.Apply style) shape
+        scales, ScaledStyle(sc, shape)
 
     | NestX(nx1, nx2, shape) ->
         let (isx, isy), shape = calculateScales shape
@@ -368,10 +383,10 @@ module Scales =
         let (origScales & (sx, sy)), _ = calculateScales shape 
         let (lx, hx), (ly, hy) = getExtremes sx, getExtremes sy
        
-        let LineStyle clr alpha width shape = 
-          Style((fun s -> { s with Fill = Solid(1.0, HTML "transparent"); StrokeWidth = Pixels width; StrokeColor=alpha, HTML clr }), shape)
-        let FontStyle style shape = 
-          Style((fun s -> { s with Font = style; Fill = Solid(1.0, HTML "black"); StrokeColor = 0.0, HTML "transparent" }), shape)
+        let LineStyle clr alpha width shape =
+          Style(Custom(fun s -> { s with Fill = Solid(1.0, HTML "transparent"); StrokeWidth = Pixels width; StrokeColor=alpha, HTML clr }), shape)
+        let FontStyle style shape =
+          Style(Custom(fun s -> { s with Font = style; Fill = Solid(1.0, HTML "black"); StrokeColor = 0.0, HTML "transparent" }), shape)
 
         let shape = 
           Layered [ 
@@ -498,8 +513,8 @@ module Drawing =
     | ScaledLayered shapes ->
         Combine(Array.map (drawShape ctx area scales) shapes)
 
-    | ScaledStyle(f, shape) ->
-        drawShape { ctx with Style = f ctx.Style } area scales shape
+    | ScaledStyle(sc, shape) ->
+        drawShape { ctx with Style = sc.Apply ctx.Style } area scales shape
 
     | ScaledShape(points) -> 
         let path = 
@@ -666,17 +681,10 @@ module Events =
 // ------------------------------------------------------------------------------------------------
 
 module Derived = 
-  let PreserveAspectRatio(pa, s) = 
-    Shape.Style((fun s -> { s with PreserveAspectRatio = pa }), s)
-
-  let StrokeColor(clr, s) = 
-    Shape.Style((fun s -> { s with StrokeColor = (1.0, HTML clr) }), s)
-
-  let FillColor(clr, s) = 
-    Shape.Style((fun s -> { s with Fill = Solid(1.0, HTML clr) }), s)
-
-  let Font(font, clr, s) =
-    Shape.Style((fun s -> { s with Fill = Solid(1.0, HTML clr); StrokeColor = (0.0, HTML clr); Font = font }), s)
+  let PreserveAspectRatio(pa, s) = Shape.Style(StyleConfig.PreserveAspectRatio pa, s)
+  let StrokeColor(clr, s) = Shape.Style(StyleConfig.StrokeColor clr, s)
+  let FillColor(clr, s) = Shape.Style(StyleConfig.FillColor clr, s)
+  let Font(font, clr, s) = Shape.Style(StyleConfig.Font(font, clr), s)
 
   let Area(line) = Shape <| seq {
     let line = Array.ofSeq line

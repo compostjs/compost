@@ -17,6 +17,9 @@ module Common =
   [<Emit("$0[$1]")>]
   let getProperty<'T> (obj:obj) (name:string) : 'T = failwith "never"
 
+  [<Emit("$0[$1]")>]
+  let (?) (obj:obj) (k:string) : 'a = failwith "never"
+
   [<Emit("$0[$1] = $2")>]
   let setProperty (o:obj) (s:string) (v:obj) = failwith "!"
 

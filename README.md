@@ -33,6 +33,20 @@ JavaScript file that is added to the `releases` folder of the `docs` with the cu
 version number in the filename (and also updates the `latest` file).
 This should all happen automatically when using `npm run release`.
 
+### Releasing Compost
+
+Before releasing, make sure all changes are committed. Then run:
+
+```
+npm run release
+```
+
+This runs three steps in order:
+
+1. **`npm run release:version`** — bumps the version in `package.json` and creates a git commit and tag (via `np`)
+2. **`npm run release:standalone`** — builds the standalone bundle and commits it to git
+3. **`npm run release:publish`** — rebuilds `dist/` and publishes to npm (prompts for 2FA)
+
 ## What is the story behind the name??
 
 ![Compost](https://github.com/compostjs/compost/raw/master/compost.gif)
